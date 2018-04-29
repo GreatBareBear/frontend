@@ -1,11 +1,17 @@
-import { AppBar, Toolbar, Typography } from 'material-ui'
+import FileUpload from '@material-ui/icons/FileUpload'
+import classNames = require('classnames')
+import { AppBar, Button, Toolbar, Typography } from 'material-ui'
 import { Theme } from 'material-ui/styles/'
 import * as React from 'react'
+import { Link, RouteComponentProps, withRouter } from 'react-router-dom'
 import { WithStyles, withStyles } from './withStyles'
 
 const styles = (theme: Theme) => ({
   flex: {
     flex: 1
+  },
+  title: {
+    cursor: 'pointer'
   },
   appBar: {
     zIndex: theme.zIndex.drawer + 1
@@ -17,19 +23,30 @@ const styles = (theme: Theme) => ({
 })
 
 @withStyles(styles)
-export default class TopBar extends React.Component<WithStyles> {
+class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
+  
+  constructor(props: any) {
+    super(props)
+  }
+  
   render() {
     const { classes } = this.props
     return (
       <div className={classes.root}>
         <AppBar position="absolute" className={classes.appBar}>
           <Toolbar>
-            <Typography variant="title" color="inherit" className={classes.flex}>
-              Title
+            <Typography variant="title" color="inherit" className={classNames(classes.flex, classes.title)} onClick={() => {this.props.history.push("/")}}>
+              ImageCube
             </Typography>
+              <Button color="inherit" onClick={() => {this.props.history.push("/upload")}}>
+                <FileUpload />
+                Upload new photo
+              </Button>
           </Toolbar>
         </AppBar>
       </div>
     )
   }
 }
+
+export default withRouter(TopBar)
