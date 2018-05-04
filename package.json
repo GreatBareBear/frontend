@@ -9,6 +9,7 @@
     "@types/react-dropzone": "^4.2.0",
     "@types/react-router": "^4.0.24",
     "@types/react-router-dom": "^4.2.6",
+    "@types/react-virtualized": "^9.18.3",
     "@types/webfontloader": "^1.6.29",
     "classnames": "^2.2.5",
     "material-ui": "^1.0.0-beta.43",
@@ -20,6 +21,7 @@
     "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",
     "react-scripts-ts": "2.15.1",
+    "react-virtualized": "^9.18.5",
     "webfontloader": "^1.6.28"
   },
   "scripts": {

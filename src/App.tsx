@@ -6,6 +6,7 @@ import * as React from 'react'
 import { Route, RouteComponentProps, Switch } from 'react-router'
 import { Link, withRouter } from 'react-router-dom'
 import NewPhoto from './routes/NewPhoto'
+import CollectionImageGrid from './ui/ImageGrid/CollectionImageGrid'
 import TopBar from './ui/TopBar'
 import { WithStyles, withStyles } from './ui/withStyles'
 
@@ -16,9 +17,6 @@ const styles = (theme: Theme) => ({
     overflow: 'hidden' as 'hidden',
     position: 'relative' as 'relative',
     display: 'flex' as 'flex'
-  },
-  card: {
-    maxWidth: 345
   },
   content: {
     flexGrow: 1,
@@ -44,7 +42,10 @@ const categories = [
   "Cats",
   "Dogs",
   "Memes",
-  "Burgers"
+  "Burgers",
+  "Cartoons",
+  "Fun",
+  "Art"
 ]
 
 @withStyles(styles)
@@ -56,7 +57,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
   }
 
   state = {
-    cards: [] as any[]
+    images: [] as any[]
   }
 
   constructor(props: any) {
@@ -65,36 +66,14 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
 
   componentDidMount() {
     if (!this.category.updated) {
-      this.generateImages(this.category.name)
+      this.updateImageList()
     }
   }
 
   componentDidUpdate() {
     if (!this.category.updated) {
-      this.generateImages(this.category.name)
+      this.updateImageList()
     }
-  }
-
-  generateImage(imageData: any) {
-    const { classes } = this.props
-    const { name, category, author, index } = imageData
-    return (
-      <GridListTile className={classes.card} key={index}>
-        <img
-          src={`https://source.unsplash.com/random?${category},${index}`}
-          title={ name }
-        />
-        <GridListTileBar
-          title={ name }
-          subtitle={<span>by: {author}</span>}
-          actionIcon={
-            <IconButton className={classes.icon}>
-              <InfoIcon />
-            </IconButton>
-          }
-          />
-      </GridListTile>
-    )
   }
 
   generateCategoryButtons() {
@@ -109,13 +88,21 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
     return categoryButtonList
   }
 
-  generateImages(category: string, imageCount: number = 20) {
-    const cardsInstance = []
+  updateImageList(imageCount: number = 20) {
+    const images = []
+    const categoryName = this.category.name
+    const min = 100
+    const max = 300
     for (let index = 1; index <= imageCount; index++) {
-      cardsInstance.push(this.generateImage({ index, category, name: category+" "+index, author: "Nuff Lee" }))
+      images.push({
+        src: `https://source.unsplash.com/random?${categoryName},${index}`,
+        author: 'Nuff Lee',
+        width: Math.floor(Math.random() * (max - min + 1)) + min,
+        height: Math.floor(Math.random() * (max - min + 1)) + min
+       })
     }
     this.category.updated = true
-    this.setState({ cards: cardsInstance })
+    this.setState({ images })
   }
 
   public render() {
@@ -132,7 +119,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
           }}
         >
           <div className={classes.toolbar} />
-          <ListSubheader component="div">CATEGORIES</ListSubheader>
+          <ListSubheader component="div">Categories</ListSubheader>
           {this.generateCategoryButtons()}
         </Drawer>
         <div className={classes.content}>
@@ -144,14 +131,10 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
               this.category = { name: match.params.id, updated: false }
             }
             return (
-              <GridList cellHeight={180} className={classes.gridList}>
-                {this.state.cards}
-              </GridList>
+              <CollectionImageGrid images={this.state.images} />
             )}} />
           <Route path="/" render={() => (
-            <GridList cellHeight={180} className={classes.gridList}>
-              {this.state.cards}
-            </GridList>
+              <CollectionImageGrid images={this.state.images} />
           )} />
           </Switch>
         </div>
