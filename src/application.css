@@ -1,0 +1,9 @@
+.imgCubeGalleryElement {
+    margin: 5px;
+    max-width: 300px;
+    box-sizing: border-box;
+    float: left;
+}
+.imgCubeGalleryElement img {
+    max-width: 100%;
+}

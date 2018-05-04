@@ -1,80 +1,65 @@
+import InfoIcon from '@material-ui/icons/Info'
+import { GridListTile, GridListTileBar, IconButton, Typography } from 'material-ui'
 import * as React from 'react'
-import { Collection } from 'react-virtualized'
-import 'react-virtualized/styles.css' // only needs to be imported once
+import * as InfiniteScroll from 'react-infinite-scroller'
+import Masonry from 'react-masonry-component'
 
 export interface CollectionImageGridProps {
-  images: any[]
+  images: any[],
+  pushMoreCallback: (count?: number) => void
 }
-
-const CELL_WIDTH = 300  
-const GUTTER_SIZE = 20
 
 export default class CollectionImageGrid extends React.Component<CollectionImageGridProps, any> {
   
-  state = {
-    images: this.props.images,
-    columnCount: 2
-  }
+  pushMoreCooldown = false
+  handleScrollIntervalId: NodeJS.Timer
 
-  _columnYMap: any
-  constructor(props: any) {
+  constructor(props: CollectionImageGridProps) {
     super(props)
+    this.handleScroll = this.handleScroll.bind(this)
   }
 
-  cellRenderer({ index, key, style }: any) {
-    return (
-      <div
-        key={key}
-        style={style}
-      >
-      <img
-          src={this.state.images[index].src}
-        />
-        
-      </div>
-    )
-  }
-
-  updateDimensions() {
-    this.setState({
-      screenWidth: window.innerWidth,
-      columnCount: Math.floor(window.innerWidth / (CELL_WIDTH + GUTTER_SIZE)),
-      images: [...this.state.images.slice(0, this.state.images.length - 1)]
-    })
+  handleScroll() {
+    if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1500 && !this.pushMoreCooldown) {
+      this.props.pushMoreCallback()
+      this.pushMoreCooldown = true
+      setTimeout(() => { this.pushMoreCooldown = false}, 1500)
+    }
   }
 
   componentDidMount() {
-    window.addEventListener("resize", this.updateDimensions.bind(this))
+    this.handleScrollIntervalId = setInterval(this.handleScroll, 100)
   }
 
-  cellSizeAndPositionGetter({ index }: any) {
-    const list = this.state.images
-    const columnCount = this.state.columnCount
-
-    const columnPosition = index % (columnCount || 1)
-    const datum = list[index]
-    const height = datum.height
-    const width = CELL_WIDTH
-    const x = columnPosition * (GUTTER_SIZE + width)
-    const y = this._columnYMap[columnPosition] || 0
-    this._columnYMap[columnPosition] = y + height + GUTTER_SIZE
-    return ({
-      height,
-      width,
-      x,
-      y
-    })
+  componentWillUnmount() {
+    clearInterval(this.handleScrollIntervalId)
   }
 
   render() {
+    const childElements = this.props.images.map((element) => {
+      return (
+        <div key={element.index} className="imgCubeGalleryElement">
+            <img src={element.src} />
+            <GridListTileBar
+              title={"An image"}
+              subtitle={<span>by: {element.author}</span>}
+              actionIcon={
+                <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
+                  <InfoIcon />
+                </IconButton>
+              }
+            />
+        </div>
+      )
+    })
+
     return (
-      <Collection
-        cellCount={this.state.images.length}
-        cellRenderer={this.cellRenderer.bind(this)}
-        cellSizeAndPositionGetter={this.cellSizeAndPositionGetter.bind(this)}
-        height={600}
-        width={1000}
-      />
+      <Masonry
+        elementType={'div'}
+        options={{}}
+      >
+        { childElements }
+      </Masonry>
     )
   }
 }

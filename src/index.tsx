@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom'
 import { BrowserRouter } from 'react-router-dom'
 import * as WebFontLoader from 'webfontloader'
 import App from './App'
+import './application.css'
 import registerServiceWorker from './registerServiceWorker'
 
 // Load global assets before starting the application

@@ -62,6 +62,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
 
   constructor(props: any) {
     super(props)
+    this.pushMoreImages = this.pushMoreImages.bind(this)
   }
 
   componentDidMount() {
@@ -88,6 +89,25 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
     return categoryButtonList
   }
 
+  pushMoreImages(pushCount: number = 10) {
+    const images = this.state.images
+    const categoryName = this.category.name
+    const min = 100
+    const max = 300
+    const currentImageCount = this.state.images.length
+    for (let index = currentImageCount + 1; index <= currentImageCount+pushCount; index++) {
+      images.push({
+        index,
+        src: `https://source.unsplash.com/random?${categoryName},${index}`,
+        author: 'Nuff Lee',
+        width: Math.floor(Math.random() * (max - min + 1)) + min,
+        height: Math.floor(Math.random() * (max - min + 1)) + min
+      })
+    }
+    this.category.updated = true
+    this.setState({ images })
+  }
+
   updateImageList(imageCount: number = 20) {
     const images = []
     const categoryName = this.category.name
@@ -95,6 +115,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
     const max = 300
     for (let index = 1; index <= imageCount; index++) {
       images.push({
+        index,
         src: `https://source.unsplash.com/random?${categoryName},${index}`,
         author: 'Nuff Lee',
         width: Math.floor(Math.random() * (max - min + 1)) + min,
@@ -131,10 +152,10 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
               this.category = { name: match.params.id, updated: false }
             }
             return (
-              <CollectionImageGrid images={this.state.images} />
+              <CollectionImageGrid pushMoreCallback={this.pushMoreImages} images={this.state.images} />
             )}} />
           <Route path="/" render={() => (
-              <CollectionImageGrid images={this.state.images} />
+              <CollectionImageGrid pushMoreCallback={this.pushMoreImages} images={this.state.images} />
           )} />
           </Switch>
         </div>
