@@ -1,12 +1,13 @@
 import InfoIcon from '@material-ui/icons/Info'
-import { GridListTile, GridListTileBar, IconButton, Typography } from 'material-ui'
+import { CircularProgress, GridListTile, GridListTileBar, IconButton, Typography } from 'material-ui'
 import * as React from 'react'
 import * as InfiniteScroll from 'react-infinite-scroller'
 import Masonry from 'react-masonry-component'
 
 export interface CollectionImageGridProps {
   images: any[],
-  pushMoreCallback: (count?: number, append?: boolean) => void
+  pushMoreCallback: (count?: number, append?: boolean) => void,
+  pushMoreCooldownLength: number
 }
 
 export default class CollectionImageGrid extends React.Component<CollectionImageGridProps, any> {
@@ -23,7 +24,7 @@ export default class CollectionImageGrid extends React.Component<CollectionImage
     if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1500 && !this.pushMoreCooldown) {
       this.props.pushMoreCallback(10, true)
       this.pushMoreCooldown = true
-      setTimeout(() => { this.pushMoreCooldown = false}, 1500)
+      setTimeout(() => { this.pushMoreCooldown = false }, this.props.pushMoreCooldownLength)
     }
   }
 
@@ -35,20 +36,39 @@ export default class CollectionImageGrid extends React.Component<CollectionImage
     clearInterval(this.handleScrollIntervalId)
   }
 
+  updateImage(elementId: string) {
+    document.getElementById(elementId + "Placeholder").style.display = "none"
+    document.getElementById(elementId + "TileBar").style.display = ""
+  }
+
   render() {
     const childElements = this.props.images.map((element) => {
       return (
         <div key={element.index} className="imgCubeGalleryElement">
-            <img src={element.src} alt={element.name} title={element.name} />
-            <GridListTileBar
-              title={element.name}
-              subtitle={<span>by: {element.author}</span>}
-              actionIcon={
-                <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
-                  <InfoIcon />
-                </IconButton>
-              }
-            />
+            <img onLoad={() => this.updateImage(element.name+element.index)} src={element.src} alt={element.name} title={element.name} />
+            <div 
+              id={element.name + element.index+"Placeholder"}
+              style={{
+                width:  '200px',
+                height: '200px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <CircularProgress />
+            </div>
+            <div id={element.name + element.index + "TileBar"} style={{ display: 'none' }}>
+              <GridListTileBar
+                title={element.name}
+                subtitle={<span>By: {element.author}</span>}
+                actionIcon={
+                  <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
+                    <InfoIcon />
+                  </IconButton>
+                }
+              />
+            </div>
         </div>
       )
     })

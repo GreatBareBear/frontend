@@ -16,7 +16,8 @@ const styles = (theme: Theme) => ({
     zIndex: 1,
     overflow: 'hidden' as 'hidden',
     position: 'relative' as 'relative',
-    display: 'flex' as 'flex'
+    display: 'flex' as 'flex',
+    minHeight: '100vh'
   },
   content: {
     flexGrow: 1,
@@ -30,7 +31,8 @@ const styles = (theme: Theme) => ({
   },
   drawerPaper: {
     position: 'relative' as 'relative',
-    width: 240
+    width: 240,
+    height: '100%'
   },
   icon: {
     color: 'rgba(255, 255, 255, 0.54)'
@@ -156,14 +158,14 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
               this.category = { name: match.params.id, updated: false }
             }
             return (
-              <CollectionImageGrid pushMoreCallback={this.updateImageList} images={this.state.images} />
+              <CollectionImageGrid pushMoreCooldownLength={3000} pushMoreCallback={this.updateImageList} images={this.state.images} />
             )}} />
           <Route path="/" render={() => {
             if (this.category.name !== 'Random') {
               this.category = { name: 'Random', updated: false }
             }
             return (
-              <CollectionImageGrid pushMoreCallback={this.updateImageList} images={this.state.images} />
+              <CollectionImageGrid pushMoreCooldownLength={3000} pushMoreCallback={this.updateImageList} images={this.state.images} />
             )
           }} />
           </Switch>

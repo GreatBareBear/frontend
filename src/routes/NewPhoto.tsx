@@ -1,7 +1,10 @@
 import FileUpload from '@material-ui/icons/FileUpload'
-import { Theme, Typography } from 'material-ui'
+import { Button, Card, CardActions, CardContent, CardMedia, Theme, Typography } from 'material-ui'
+import { computed, observable } from 'mobx'
+import { observer } from 'mobx-react'
 import * as React from 'react'
 import Dropzone from 'react-dropzone'
+import Masonry from 'react-masonry-component'
 import { WithStyles, withStyles } from '../ui/withStyles'
 
 const styles = (theme: Theme) => ({
@@ -24,17 +27,100 @@ const styles = (theme: Theme) => ({
   uploadIcon: {
     width: '128px',
     height: '128px'
+  },
+  card: {
+    maxWidth: 345,
+    float: 'left' as 'left',
+    margin: '20px'
+  },
+  media: {
+    height: 0,
+    paddingTop: '56.25%' 
+  },
+  clearAllButton: {
+    float: 'right' as 'right'
   }
 })
 
 @withStyles(styles)
+@observer
 export default class App extends React.Component<WithStyles> {
+
+  state = {
+    files: [] as any[]
+  }
 
   onDrop(acceptedFiles: any, rejectedFiles: any) {
       rejectedFiles.forEach((file: any) => {
           console.log("Rejected file: "+file.name)
       })
-      console.log("Upload accepted files", acceptedFiles)
+      const files = this.state.files
+      files.push(...acceptedFiles)
+      this.setState({ files })
+  }
+
+  removeFile(index: number) {
+    const files = this.state.files
+    if (confirm("Are you sure you want to delete \"" + files[index].name + "\"?")) {
+      files.splice(index, 1)
+      this.setState({ files })
+    }
+  }
+
+  clearList() {
+    if (confirm("Are you sure you want to clear the whole list?")) {
+      this.setState({ files: [] })
+    }
+  }
+
+  renderMasonry() {
+    const { classes } = this.props
+    return (
+      <React.Fragment>
+        <br />
+        <br />
+        <Typography variant='subheading'>
+          Your images ({this.state.files.length}):
+          <Button variant="raised" className={classes.clearAllButton} color="primary" onClick={() => this.clearList()}>
+            Delete all
+          </Button>
+        </Typography>
+        
+        <Masonry
+          elementType={'div'}
+          options={{}}
+        >
+          {this.state.files.map((file: any, index: number) => {
+            return (
+              <Card className={classes.card} key={index}>
+                <CardMedia
+                  className={classes.media}
+                  image={file.preview}
+                  title={file.name}
+                />
+                <CardContent>
+                  <Typography gutterBottom variant="headline" component="h2">
+                    {file.name}
+                  </Typography>
+                  <Typography component="p">
+                    Description of your photo<br />
+                    {file.type === 'image/gif' && <strong>If GIF image is animated, it will get replaced with a static image (first frame will be taken).</strong>}
+                  </Typography>
+                </CardContent>
+                <CardActions>
+                  <Button size="small" color="primary" onClick={() => this.removeFile(index)}>
+                    Cancel
+                    </Button>
+                  <Button size="small" color="primary">
+                    Upload image
+                    </Button>
+                </CardActions>
+              </Card>
+            )
+          })}
+        </Masonry>
+      </React.Fragment>
+    )
   }
 
   render() {
@@ -52,6 +138,8 @@ export default class App extends React.Component<WithStyles> {
             </Typography>
           </div>
         </Dropzone>
+        <br />
+        {this.state.files.length > 0 && this.renderMasonry()}
       </div>
     )
   }
