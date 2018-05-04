@@ -1,5 +1,5 @@
 import InfoIcon from '@material-ui/icons/Info'
-import { CssBaseline, Drawer, GridList, GridListTile, GridListTileBar, IconButton, ListItem, ListItemText, ListSubheader } from 'material-ui'
+import { CssBaseline, Drawer, GridList, GridListTile, GridListTileBar, IconButton, ListItem, ListItemText, ListSubheader, Typography } from 'material-ui'
 import { Theme } from 'material-ui/styles/'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import * as React from 'react'
@@ -38,15 +38,27 @@ const styles = (theme: Theme) => ({
   toolbar: theme.mixins.toolbar as CSSProperties
 })
 
-const categories = [
+const categories: string[] = [
   "Cats",
   "Dogs",
   "Memes",
   "Burgers",
   "Cartoons",
   "Fun",
-  "Art"
+  "Art",
+  "Nufflee",
+  "TheChoconut"
 ]
+
+const isValidCategory = (categoryQueryName: string) => {
+  let returnValue: boolean = false 
+  categories.forEach((databaseCategoryName: string) => {
+      if (categoryQueryName === databaseCategoryName) {
+        returnValue = true
+      }
+    })
+  return returnValue
+}
 
 @withStyles(styles)
 class App extends React.Component<WithStyles & RouteComponentProps<any>> {
@@ -62,7 +74,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
 
   constructor(props: any) {
     super(props)
-    this.pushMoreImages = this.pushMoreImages.bind(this)
+    this.updateImageList = this.updateImageList.bind(this)
   }
 
   componentDidMount() {
@@ -89,34 +101,19 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
     return categoryButtonList
   }
 
-  pushMoreImages(pushCount: number = 10) {
-    const images = this.state.images
+  updateImageList(imageCount: number = 20, append: boolean = false) {
+    const images = append ? this.state.images : []
     const categoryName = this.category.name
     const min = 100
     const max = 300
-    const currentImageCount = this.state.images.length
-    for (let index = currentImageCount + 1; index <= currentImageCount+pushCount; index++) {
+    const currentIndex = append ? this.state.images.length + 1 : 1
+    const forLength = append ? this.state.images.length + imageCount : imageCount
+    for (let index = currentIndex; index <= forLength; index++) {
+      const photoCategory = categoryName === 'Random' ? categories[Math.floor(Math.random() * categories.length)] : categoryName
       images.push({
         index,
-        src: `https://source.unsplash.com/random?${categoryName},${index}`,
-        author: 'Nuff Lee',
-        width: Math.floor(Math.random() * (max - min + 1)) + min,
-        height: Math.floor(Math.random() * (max - min + 1)) + min
-      })
-    }
-    this.category.updated = true
-    this.setState({ images })
-  }
-
-  updateImageList(imageCount: number = 20) {
-    const images = []
-    const categoryName = this.category.name
-    const min = 100
-    const max = 300
-    for (let index = 1; index <= imageCount; index++) {
-      images.push({
-        index,
-        src: `https://source.unsplash.com/random?${categoryName},${index}`,
+        name: `${photoCategory}-${index}`,
+        src: `https://source.unsplash.com/random?${photoCategory},${index}`,
         author: 'Nuff Lee',
         width: Math.floor(Math.random() * (max - min + 1)) + min,
         height: Math.floor(Math.random() * (max - min + 1)) + min
@@ -148,15 +145,27 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
           <Switch>
           <Route exact path="/upload" component={NewPhoto} />
           <Route path="/category/:id" render={({ match }) => {
+            if (!isValidCategory(match.params.id)) {
+              return (
+                <Typography variant="title">
+                  Category "<strong>{match.params.id}</strong>" does not exist!
+                </Typography>
+              )
+            }
             if (this.category.name !== match.params.id) {
               this.category = { name: match.params.id, updated: false }
             }
             return (
-              <CollectionImageGrid pushMoreCallback={this.pushMoreImages} images={this.state.images} />
+              <CollectionImageGrid pushMoreCallback={this.updateImageList} images={this.state.images} />
             )}} />
-          <Route path="/" render={() => (
-              <CollectionImageGrid pushMoreCallback={this.pushMoreImages} images={this.state.images} />
-          )} />
+          <Route path="/" render={() => {
+            if (this.category.name !== 'Random') {
+              this.category = { name: 'Random', updated: false }
+            }
+            return (
+              <CollectionImageGrid pushMoreCallback={this.updateImageList} images={this.state.images} />
+            )
+          }} />
           </Switch>
         </div>
       </div>

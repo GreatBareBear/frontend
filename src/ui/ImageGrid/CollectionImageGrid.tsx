@@ -6,7 +6,7 @@ import Masonry from 'react-masonry-component'
 
 export interface CollectionImageGridProps {
   images: any[],
-  pushMoreCallback: (count?: number) => void
+  pushMoreCallback: (count?: number, append?: boolean) => void
 }
 
 export default class CollectionImageGrid extends React.Component<CollectionImageGridProps, any> {
@@ -21,7 +21,7 @@ export default class CollectionImageGrid extends React.Component<CollectionImage
 
   handleScroll() {
     if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1500 && !this.pushMoreCooldown) {
-      this.props.pushMoreCallback()
+      this.props.pushMoreCallback(10, true)
       this.pushMoreCooldown = true
       setTimeout(() => { this.pushMoreCooldown = false}, 1500)
     }
@@ -39,9 +39,9 @@ export default class CollectionImageGrid extends React.Component<CollectionImage
     const childElements = this.props.images.map((element) => {
       return (
         <div key={element.index} className="imgCubeGalleryElement">
-            <img src={element.src} />
+            <img src={element.src} alt={element.name} title={element.name} />
             <GridListTileBar
-              title={"An image"}
+              title={element.name}
               subtitle={<span>by: {element.author}</span>}
               actionIcon={
                 <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
