@@ -35,8 +35,8 @@ class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
       <div className={classes.root}>
         <AppBar position="absolute" className={classes.appBar}>
           <Toolbar>
-            <Typography variant="title" color="inherit" className={classNames(classes.flex, classes.title)} onClick={() => {this.props.history.push("/")}}>
-              ImageCube
+            <Typography variant="title" color="inherit" className={classNames(classes.flex)}>
+              <a className={classes.title} onClick={() => { this.props.history.push("/") }}>ImageCube</a>
             </Typography>
               <Button color="inherit" onClick={() => {this.props.history.push("/upload")}}>
                 <FileUpload />

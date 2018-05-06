@@ -1,10 +1,13 @@
 import FileUpload from '@material-ui/icons/FileUpload'
-import { Button, Card, CardActions, CardContent, CardMedia, Theme, Typography } from 'material-ui'
+import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, Theme, Typography } from 'material-ui'
 import { computed, observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
-import Dropzone from 'react-dropzone'
+import Dropzone, { ImageFile } from 'react-dropzone'
 import Masonry from 'react-masonry-component'
+import { categories } from '../App'
+import EditableText from '../ui/EditableText'
+import ICUploadedImage from '../ui/ICUploadedImage'
 import { WithStyles, withStyles } from '../ui/withStyles'
 
 const styles = (theme: Theme) => ({
@@ -28,34 +31,43 @@ const styles = (theme: Theme) => ({
     width: '128px',
     height: '128px'
   },
-  card: {
-    maxWidth: 345,
-    float: 'left' as 'left',
-    margin: '20px'
-  },
-  media: {
-    height: 0,
-    paddingTop: '56.25%' 
-  },
   clearAllButton: {
     float: 'right' as 'right'
   }
 })
+
+export interface ICUploadImage {
+  name: string,
+  description: string,
+  preview: string,
+  category: string,
+  type: string,
+  author: string
+}
 
 @withStyles(styles)
 @observer
 export default class App extends React.Component<WithStyles> {
 
   state = {
-    files: [] as any[]
+    files: [] as ICUploadImage[]
   }
 
-  onDrop(acceptedFiles: any, rejectedFiles: any) {
+  onDrop(acceptedFiles: ImageFile[], rejectedFiles: ImageFile[]) {
       rejectedFiles.forEach((file: any) => {
           console.log("Rejected file: "+file.name)
       })
       const files = this.state.files
-      files.push(...acceptedFiles)
+      acceptedFiles.forEach((element: ImageFile) => {
+        files.push({
+          name: element.name,
+          preview: element.preview,
+          category: "",
+          type: element.type,
+          author: "Nuff Lee",
+          description: "Default image description"
+        })
+      })
       this.setState({ files })
   }
 
@@ -90,32 +102,14 @@ export default class App extends React.Component<WithStyles> {
           elementType={'div'}
           options={{}}
         >
-          {this.state.files.map((file: any, index: number) => {
+          {this.state.files.map((file: ICUploadImage, index: number) => {
             return (
-              <Card className={classes.card} key={index}>
-                <CardMedia
-                  className={classes.media}
-                  image={file.preview}
-                  title={file.name}
+              <ICUploadedImage
+                fileData={file}
+                index={index}
+                key={index}
+                removeFileCallback={() => this.removeFile(index)}
                 />
-                <CardContent>
-                  <Typography gutterBottom variant="headline" component="h2">
-                    {file.name}
-                  </Typography>
-                  <Typography component="p">
-                    Description of your photo<br />
-                    {file.type === 'image/gif' && <strong>If GIF image is animated, it will get replaced with a static image (first frame will be taken).</strong>}
-                  </Typography>
-                </CardContent>
-                <CardActions>
-                  <Button size="small" color="primary" onClick={() => this.removeFile(index)}>
-                    Cancel
-                    </Button>
-                  <Button size="small" color="primary">
-                    Upload image
-                    </Button>
-                </CardActions>
-              </Card>
             )
           })}
         </Masonry>

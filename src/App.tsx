@@ -1,12 +1,19 @@
-import InfoIcon from '@material-ui/icons/Info'
-import { CssBaseline, Drawer, GridList, GridListTile, GridListTileBar, IconButton, ListItem, ListItemText, ListSubheader, Typography } from 'material-ui'
+import {
+  CssBaseline,
+  Drawer,
+  IconButton,
+  ListItem,
+  ListItemText,
+  ListSubheader,
+  Typography
+  } from 'material-ui'
 import { Theme } from 'material-ui/styles/'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import * as React from 'react'
 import { Route, RouteComponentProps, Switch } from 'react-router'
 import { Link, withRouter } from 'react-router-dom'
 import NewPhoto from './routes/NewPhoto'
-import CollectionImageGrid from './ui/ImageGrid/CollectionImageGrid'
+import ICGallery from './ui/ICGallery'
 import TopBar from './ui/TopBar'
 import { WithStyles, withStyles } from './ui/withStyles'
 
@@ -40,7 +47,7 @@ const styles = (theme: Theme) => ({
   toolbar: theme.mixins.toolbar as CSSProperties
 })
 
-const categories: string[] = [
+export const categories: string[] = [
   "Cats",
   "Dogs",
   "Memes",
@@ -49,8 +56,17 @@ const categories: string[] = [
   "Fun",
   "Art",
   "Nufflee",
-  "TheChoconut"
+  "TheChoconut",
+  "Other"
 ]
+export interface ICImage {
+  index: number,
+  name: string,
+  src: string,
+  author: string,
+  width: number,
+  height: number
+}
 
 const isValidCategory = (categoryQueryName: string) => {
   let returnValue: boolean = false 
@@ -71,7 +87,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
   }
 
   state = {
-    images: [] as any[]
+    images: [] as ICImage[]
   }
 
   constructor(props: any) {
@@ -158,14 +174,14 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
               this.category = { name: match.params.id, updated: false }
             }
             return (
-              <CollectionImageGrid pushMoreCooldownLength={3000} pushMoreCallback={this.updateImageList} images={this.state.images} />
+              <ICGallery infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} />
             )}} />
           <Route path="/" render={() => {
             if (this.category.name !== 'Random') {
               this.category = { name: 'Random', updated: false }
             }
             return (
-              <CollectionImageGrid pushMoreCooldownLength={3000} pushMoreCallback={this.updateImageList} images={this.state.images} />
+              <ICGallery infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} />
             )
           }} />
           </Switch>

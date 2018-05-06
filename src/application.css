@@ -1,9 +1,44 @@
-.imgCubeGalleryElement {
+.ICGalleryImage {
     margin: 5px;
     max-width: 300px;
     box-sizing: border-box;
-    float: left;
 }
-.imgCubeGalleryElement img {
+.ICGalleryImage img {
     max-width: 100%;
+}
+.ICGalleryImage div div {
+    bottom: 5px;
+}
+.ICGallery {
+    display: none
+}
+.ICGallery.ICGalleryLoaded {
+    display: block
+}
+.galleryLoadingMore {
+    width: 100%;
+    height: 250px;
+    display: flex;
+    justify-content: center;
+    align-items: center
+}
+.EditableTextField div input {
+    word-wrap: break-word;
+    word-break: break-all
+}
+.EditableTextField {
+    flex: 1;
+}
+
+.fade-enter {
+    transform: rotate(180deg) !important
+}
+
+.fade-enter-active {
+    transform: rotate(0deg) !important;
+    transition: transform 500ms ease-in !important;
+}
+
+.fade-enter-done {
+    transform: rotate(0deg)
 }
