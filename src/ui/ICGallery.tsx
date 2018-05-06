@@ -96,6 +96,11 @@ export default class ICGallery extends React.Component<ICGalleryProps & WithStyl
       return nextProps.images !== this.props.images || !this.isGalleryLoaded
     }
   }
+  // Deprecated by MobX API, shouldComponentUpdate function should only be handled by MobX's observer.
+  // Fixes the gallery scrolling issue where scrolling wouldn't update the component (and that is required).
+  shouldComponentUpdate(nextProps: ICGalleryProps & WithStyles) {
+    return nextProps.images !== this.props.images || !this.isGalleryLoaded
+  }
 
   render() {
     const { classes, images } = this.props
