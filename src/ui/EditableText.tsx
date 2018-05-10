@@ -48,7 +48,8 @@ type EditableTextProps = WithStyles & {
 @observer
 export default class EditableText extends React.Component<EditableTextProps> {
   @observable editState = false
-  @observable currentValue = this.props.defaultValue
+  savedValue = this.props.defaultValue
+  @observable currentValue = this.savedValue
   valueUpdated = false
 
   constructor(props: EditableTextProps) {
@@ -57,7 +58,7 @@ export default class EditableText extends React.Component<EditableTextProps> {
 
   updateValue(event: React.ChangeEvent<HTMLInputElement>) {
     this.currentValue = event.target.value
-    this.valueUpdated = true
+    this.valueUpdated = this.currentValue !== this.savedValue
   }
 
   updateEditState() {
@@ -65,10 +66,12 @@ export default class EditableText extends React.Component<EditableTextProps> {
 
     if (!this.editState && this.valueUpdated) {
       this.valueUpdated = false
+      this.savedValue = this.currentValue
+      this.props.onValueApplied(this.savedValue)
     }
   }
 
-  componentWillUpdate(nextProps: EditableTextProps & WithStyles, nextState: any) {
+  componentWillUpdate(nextProps: EditableTextProps, nextState: any) {
     if (nextProps.defaultValue !== this.props.defaultValue) {
       this.currentValue = nextProps.defaultValue
     }
@@ -78,15 +81,16 @@ export default class EditableText extends React.Component<EditableTextProps> {
 
   render() {
     const { classes } = this.props
-
+    const typography: TypographyStyle = createTypography(createPalette({}), {})[this.props.typographyVariant]
+    const nativeInputProps = { style: typography } 
     if (this.editState) {
       return (
         <div className={classes.root}>
-          <TextField className={'EditableTextField'} value={this.currentValue} onChange={(e) => this.updateValue(e)} multiline={true}/>
+          <TextField className={classes.editableTextField} InputProps={nativeInputProps} value={this.currentValue} onChange={(e) => this.updateValue(e)} multiline={true}/>
           <IconButton color='primary' className={classes.button} aria-label='Stop editing' onClick={() => this.updateEditState()}>
             <TransitionGroup component={null}>
               <CSSTransition key={this.valueUpdated ? 'done' : 'close'} timeout={500} classNames='fade' unmountOnExit={true} exit={false}>
-                {this.valueUpdated ? <DoneIcon/> : <CloseIcon/> /* SVG MORPH */}
+                {this.valueUpdated ? <DoneIcon/> : <CloseIcon/>}
               </CSSTransition>
             </TransitionGroup>
           </IconButton>
