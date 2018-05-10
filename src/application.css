@@ -1,36 +1,42 @@
-.ICGalleryImage {
-    margin: 5px;
-    max-width: 300px;
-    box-sizing: border-box;
-}
-.ICGalleryImage img {
-    max-width: 100%;
-}
-.ICGalleryImage div div {
-    bottom: 5px;
-}
-.ICGallery {
-    display: none
-}
-.ICGallery.ICGalleryLoaded {
-    display: block
-}
-.galleryLoadingMore {
-    width: 100%;
-    height: 250px;
-    display: flex;
-    justify-content: center;
-    align-items: center
-}
-.fade-enter {
-    transform: rotate(180deg) !important
+.GalleryImage {
+  margin: 5px;
+  max-width: 300px;
+  box-sizing: border-box;
 }
 
-.fade-enter-active {
-    transform: rotate(0deg) !important;
-    transition: transform 500ms ease-in !important;
+.GalleryImage img {
+  max-width: 100%;
 }
 
-.fade-enter-done {
-    transform: rotate(0deg)
+.GalleryImage div div {
+  bottom: 5px;
+}
+
+.Gallery {
+  display: none
+}
+
+.Gallery.GalleryLoaded {
+  display: block
+}
+
+.GalleryLoadingMore {
+  width: 100%;
+  height: 250px;
+  display: flex;
+  justify-content: center;
+  align-items: center
+}
+
+.FadeEnter {
+  transform: rotate(180deg) !important
+}
+
+.FadeEnterActive {
+  transform: rotate(0deg) !important;
+  transition: transform 500ms ease-in !important;
+}
+
+.FadeEnterDone {
+  transform: rotate(0deg)
 }

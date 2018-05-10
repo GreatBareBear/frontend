@@ -15,6 +15,8 @@
         "multiline": "never"
       }
     ],
+    "ordered-imports": false,
+    "no-object-literal-type-assertion": false,
     "object-literal-sort-keys": false,
     "member-access": false,
     "no-console": false,

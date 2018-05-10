@@ -6,14 +6,13 @@ import App from './App'
 import './application.css'
 import registerServiceWorker from './registerServiceWorker'
 
-// Load global assets before starting the application
-// (This reduces visual flickering on first page load)
 WebFontLoader.load({
-  active: initApp, // Run app with fonts
+  active: initApp,
   classes: false,
-  google: { families: ["Roboto"] },
-  inactive: initApp // Run app without fonts (edge case, fonts are expected to load)
+  google: { families: ['Roboto'] },
+  inactive: initApp
 })
+
 function initApp() {
   ReactDOM.render(
     <BrowserRouter>
