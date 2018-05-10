@@ -30,7 +30,7 @@ export default class ICGallery extends React.Component<ICGalleryProps & WithStyl
   
   infiniteScrollCooldownActive = false
   handleScrollIntervalId: NodeJS.Timer
-  loadedImagesCount = 0
+  @observable loadedImagesCount = 0
   @observable imagesLoadedPercent = 0
   galleryReference: any
 
@@ -43,8 +43,9 @@ export default class ICGallery extends React.Component<ICGalleryProps & WithStyl
     if (
       document.documentElement.scrollHeight - document.documentElement.scrollTop < 1300 // Fix: No DOM.
       && !this.infiniteScrollCooldownActive // Cooldown for scroll
-      && this.isGalleryReady
-      && this.isGalleryLoaded) {
+      && this.isGalleryReady // Is the gallery ready.
+      && this.isGalleryLoaded // Are all images loaded.
+    ) {
       this.props.pushMoreCallback(10, true)
       this.infiniteScrollCooldownActive = true
       setTimeout(() => { this.infiniteScrollCooldownActive = false }, this.props.infiniteScrollCooldownLength)
@@ -96,6 +97,7 @@ export default class ICGallery extends React.Component<ICGalleryProps & WithStyl
       return nextProps.images !== this.props.images || !this.isGalleryLoaded
     }
   }
+
   // Deprecated by MobX API, shouldComponentUpdate function should only be handled by MobX's observer.
   // Fixes the gallery scrolling issue where scrolling wouldn't update the component (and that is required).
   shouldComponentUpdate(nextProps: ICGalleryProps & WithStyles) {

@@ -17,7 +17,7 @@ const styles = (theme: Theme) => ({
         marginTop: theme.spacing.unit
     },
     card: {
-        maxWidth: 345,
+        width: 345, // TODO: Make the cards responsive (like a card row), but they cannot rescale by changing their description / name.
         float: 'left' as 'left',
         margin: '20px'
     },

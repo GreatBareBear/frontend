@@ -141,7 +141,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<any>> {
     this.setState({ images })
   }
 
-  public render() {
+  render() {
     const { classes } = this.props
 
     return (
