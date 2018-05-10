@@ -61,13 +61,18 @@ export default class EditableText extends React.Component<EditableTextProps> {
     this.valueUpdated = this.currentValue !== this.savedValue
   }
 
-  updateEditState() {
+  updateEditState(shouldUpdateValue?: boolean) {
     this.editState = !this.editState
 
     if (!this.editState && this.valueUpdated) {
       this.valueUpdated = false
-      this.savedValue = this.currentValue
-      this.props.onValueApplied(this.savedValue)
+      if (shouldUpdateValue) {
+        this.savedValue = this.currentValue
+        this.props.onValueApplied(this.savedValue)
+      } else {
+        this.currentValue = this.savedValue
+      }
+      
     }
   }
 
@@ -87,13 +92,14 @@ export default class EditableText extends React.Component<EditableTextProps> {
       return (
         <div className={classes.root}>
           <TextField className={classes.editableTextField} InputProps={nativeInputProps} value={this.currentValue} onChange={(e) => this.updateValue(e)} multiline={true}/>
-          <IconButton color='primary' className={classes.button} aria-label='Stop editing' onClick={() => this.updateEditState()}>
-            <TransitionGroup component={null}>
-              <CSSTransition key={this.valueUpdated ? 'done' : 'close'} timeout={500} classNames='fade' unmountOnExit={true} exit={false}>
-                {this.valueUpdated ? <DoneIcon/> : <CloseIcon/>}
-              </CSSTransition>
-            </TransitionGroup>
+          <IconButton color='primary' className={classes.button} aria-label='Stop editing and discard changes' onClick={() => this.updateEditState(false)}>
+            <CloseIcon />
           </IconButton>
+          {this.valueUpdated && 
+          <IconButton color='primary' className={classes.button} aria-label='Stop editing and save changes' onClick={() => this.updateEditState(true)}>
+            <DoneIcon />
+          </IconButton>}
+          
         </div>
       )
     }
