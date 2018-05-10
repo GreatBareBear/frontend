@@ -1,8 +1,10 @@
 import CloseIcon from '@material-ui/icons/Close'
 import DoneIcon from '@material-ui/icons/Done'
 import EditIcon from '@material-ui/icons/Edit'
+import classNames = require('classnames')
 import { IconButton, TextField, Theme, Typography } from 'material-ui'
-import { Style } from 'material-ui/styles/createTypography'
+import createPalette from 'material-ui/styles/createPalette'
+import createTypography, { Style, TypographyStyle } from 'material-ui/styles/createTypography'
 import { TypographyProps } from 'material-ui/Typography'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
@@ -31,6 +33,13 @@ const styles = (theme: Theme) => ({
     button: {
         width: '36px',
         height: '36px'
+    },
+    editableTextField: {
+        'flex': 1,
+        '& div input': {
+            wordWrap: 'break-word' as 'break-word',
+            wordBreak: 'break-all' as 'break-all'
+        }
     }
 })
 
@@ -53,13 +62,16 @@ export default class EditableText extends React.Component<EditableTextProps & Wi
 
     renderTextField() {
         const { classes } = this.props
+        const typography: TypographyStyle = createTypography(createPalette({}), {})[this.props.typographyVariant]
+        const nativeInputProps = { style: typography }
         return (
             <div className={classes.root}>
                 <TextField
-                    className={"EditableTextField"}
+                    className={classes.editableTextField}
                     value={this.currentValue}
                     onChange={(e) => this.updateValue(e)}
                     multiline={true}
+                    InputProps={nativeInputProps}
                 />
                 <IconButton color="primary" className={classes.button} aria-label="Stop editing" onClick={() => this.updateEditState()}>
                     <TransitionGroup component={null}>
@@ -70,7 +82,7 @@ export default class EditableText extends React.Component<EditableTextProps & Wi
                             unmountOnExit={true}
                             exit={false}
                         >
-                            {this.valueUpdated ? <DoneIcon /> : <CloseIcon /> /* SVG MORPH */}
+                            {this.valueUpdated ? <DoneIcon /> : <CloseIcon />}
                         </CSSTransition>
                     </TransitionGroup>
                 </IconButton>
@@ -108,7 +120,6 @@ export default class EditableText extends React.Component<EditableTextProps & Wi
     }
 
     render() {
-        const { classes } = this.props
         if (this.editState) {
             return this.renderTextField()
         }
