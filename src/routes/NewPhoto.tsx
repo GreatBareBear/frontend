@@ -38,12 +38,13 @@ const styles = (theme: Theme) => ({
 
 export interface ICUploadImage {
   name: string,
-  description: string,
   preview: string,
   category: string,
   type: string,
   author: string
 }
+
+export const DEFAULT_AUTHOR_PLACEHOLDER = "Mr. Anomynous"
 
 @withStyles(styles)
 @observer
@@ -64,8 +65,7 @@ export default class App extends React.Component<WithStyles> {
           preview: element.preview,
           category: "",
           type: element.type,
-          author: "Nuff Lee",
-          description: "Default image description"
+          author: DEFAULT_AUTHOR_PLACEHOLDER
         })
       })
       this.setState({ files })

@@ -1,7 +1,7 @@
-import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, Theme, Typography } from 'material-ui'
+import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, TextField, Theme, Typography } from 'material-ui'
 import * as React from 'react'
 import { categories } from '../App'
-import { ICUploadImage } from '../routes/NewPhoto'
+import { DEFAULT_AUTHOR_PLACEHOLDER, ICUploadImage } from '../routes/NewPhoto'
 import EditableText from './EditableText'
 import { WithStyles, withStyles } from './withStyles'
 
@@ -24,6 +24,9 @@ const styles = (theme: Theme) => ({
     media: {
         height: 0,
         paddingTop: '56.25%'
+    },
+    textField: {
+        width: '100%'
     }
 })
 
@@ -50,9 +53,9 @@ export default class ICUploadedImage extends React.Component<ICUploadedImageProp
         this.setState({ file })
     }
 
-    updateDescription(index: number, newDescription: string) {
+    updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
         const { file } = this.state
-        file.description = newDescription
+        file.author = event.target.value
         this.setState({ file })
     }
 
@@ -80,14 +83,21 @@ export default class ICUploadedImage extends React.Component<ICUploadedImageProp
                         typographyVariant={'headline'}
                         onValueApplied={(value) => this.updateName(index, value)}
                     />
-                    <EditableText
-                        defaultValue={"Image description"}
-                        typographyComponent={'p'}
-                        onValueApplied={(value) => this.updateDescription(index, value)}
+                    <TextField
+                        id="with-placeholder"
+                        label="Image author"
+                        placeholder={DEFAULT_AUTHOR_PLACEHOLDER}
+                        className={classes.textField}
+                        value={this.state.file.author}
+                        onChange={(event) => this.updateAuthor(event)}
+                        margin="normal"
                     />
-                    <Typography component="p">
-                        {file.type === 'image/gif' && <strong>If GIF image is animated, it will get replaced with a static image (first frame will be taken).</strong>}
-                    </Typography>
+                    {file.type === 'image/gif' && 
+                        <Typography component="p">
+                             <strong>If GIF image is animated, it will get replaced with a static image (first frame will be taken).</strong>
+                        </Typography>
+                    }
+                    
                     <FormControl className={this.props.classes.categoryPicker}>
                         <InputLabel htmlFor="categoryPicker">Category</InputLabel>
                         <Select
