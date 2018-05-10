@@ -1,6 +1,5 @@
 import FileUpload from '@material-ui/icons/FileUpload'
-import { Button, Theme, Typography } from 'material-ui'
-import { observer } from 'mobx-react'
+import { Button, Theme, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from 'material-ui'
 import * as React from 'react'
 import Dropzone, { ImageFile } from 'react-dropzone'
 import Masonry from 'react-masonry-component'
@@ -8,6 +7,7 @@ import { CSSProperties } from 'material-ui/styles/withStyles'
 import UploadedImage from '../ui/UploadedImage'
 import { WithStyles, withStyles } from '../ui/withStyles'
 import { UploadImage } from '../models/UploadImage'
+import FileDeleteDialog from '../ui/FileDeleteDialog'
 
 const styles = (theme: Theme) => ({
   dropZone: {
@@ -38,10 +38,10 @@ const styles = (theme: Theme) => ({
 export const DEFAULT_AUTHOR = 'Mr. Anomynous'
 
 @withStyles(styles)
-@observer
 export default class App extends React.Component<WithStyles> {
   state = {
-    files: [] as UploadImage[]
+    files: [] as UploadImage[],
+    filesToRemove: [] as UploadImage[]
   }
 
   onDrop(acceptedFiles: ImageFile[], rejectedFiles: ImageFile[]) {
@@ -61,18 +61,19 @@ export default class App extends React.Component<WithStyles> {
     this.setState({ files })
   }
 
-  removeFile(index: number) {
-    const files = this.state.files
-    if (confirm('Are you sure you want to delete \'' + files[index].name + '\'?')) {
-      files.splice(index, 1)
-      this.setState({ files })
+  removeFiles(shouldRemoveFiles: boolean, filesToRemoveArray: UploadImage[]) {
+    let { files, filesToRemove } = this.state
+    if (shouldRemoveFiles) {
+      files = files.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
     }
+    filesToRemove = filesToRemove.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
+    this.setState({ files, filesToRemove })
   }
 
-  clearList() {
-    if (confirm('Are you sure you want to clear the whole list?')) {
-      this.setState({ files: [] })
-    }
+  addToRemoveFilesList(files: UploadImage[]) {
+    let filesToRemove = this.state.filesToRemove
+    filesToRemove = filesToRemove.concat(files)
+    this.setState({ filesToRemove })
   }
 
   renderMasonry() {
@@ -83,7 +84,7 @@ export default class App extends React.Component<WithStyles> {
         <br/>
         <Typography variant='subheading'>
           Your images ({this.state.files.length}):
-          <Button variant='raised' className={classes.clearAllButton} color='primary' onClick={() => this.clearList()}>
+          <Button variant='raised' className={classes.clearAllButton} color='primary' onClick={() => this.addToRemoveFilesList(this.state.files)}>
             Delete all
           </Button>
         </Typography>
@@ -98,7 +99,7 @@ export default class App extends React.Component<WithStyles> {
                 fileData={file}
                 index={index}
                 key={index}
-                removeFileCallback={() => this.removeFile(index)}
+                removeFileCallback={() => this.addToRemoveFilesList([file])}
               />
             )
           })}
@@ -124,6 +125,7 @@ export default class App extends React.Component<WithStyles> {
         </Dropzone>
         <br/>
         {this.state.files.length > 0 && this.renderMasonry()}
+        <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)} />
       </div>
     )
   }
