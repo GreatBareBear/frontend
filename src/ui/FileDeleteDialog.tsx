@@ -45,12 +45,9 @@ export default class FileDeleteDialog extends React.Component<DeleteDialogProps>
               <DialogTitle id="alert-dialog-title">Cancel upload</DialogTitle>
               <DialogContent>
                   <DialogContentText id="alert-dialog-description">
-                  <p>
                     This action <strong>will cancel the upload for {this.props.files.length === 1 ? "selected image '"+this.props.files[0].name+"'" : this.props.files.length + " selected images"}</strong> and <strong>cannot be undone</strong>.
-                  </p>
-                  <p>
+                    <br />
                     Are you sure you want to cancel the upload?
-                  </p>
                   </DialogContentText>
               </DialogContent>
               <DialogActions>

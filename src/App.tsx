@@ -37,7 +37,12 @@ const styles = (theme: Theme) => ({
   icon: {
     color: 'rgba(255, 255, 255, 0.54)'
   },
-  toolbar: theme.mixins.toolbar as CSSProperties
+  toolbar: theme.mixins.toolbar as CSSProperties,
+  versionText: {
+    position: 'fixed',
+    left: 0,
+    bottom: 0
+  } as CSSProperties
 })
 
 export const categories: string[] = [
@@ -136,6 +141,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<{}>, {
           <div className={classes.toolbar}/>
           <ListSubheader component='div'>Categories</ListSubheader>
           {this.renderCategoryButtons()}
+          <ListSubheader component='div' disableSticky={true} className={classes.versionText}>imgCube Web v1.0</ListSubheader>
         </Drawer>
         <div className={classes.content}>
           <div className={classes.toolbar}/>
