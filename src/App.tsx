@@ -1,24 +1,29 @@
-import { CssBaseline, Drawer, ListItem, ListItemText, ListSubheader, Typography } from 'material-ui'
+import { createMuiTheme, CssBaseline, Drawer, ListItem, ListItemText, ListSubheader, MuiThemeProvider, Typography } from 'material-ui'
 import { Theme } from 'material-ui/styles/'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import * as React from 'react'
-import { Route, RouteComponentProps, Switch } from 'react-router'
-import { withRouter } from 'react-router-dom'
-import UploadImage from './routes/UploadImage'
-import Gallery from './ui/Gallery'
+import { Route, RouteComponentProps, Switch, withRouter } from 'react-router'
+import { indigo, red } from 'material-ui/colors'
+import UploadImagePage from './routes/UploadImagePage'
+import GalleryPage from './ui/GalleryPage'
 import TopBar from './ui/TopBar'
 import { WithStyles, withStyles } from './ui/withStyles'
 import { Image } from './models/Image'
+import { categories, getCategoryId } from './models/categories'
+import { withApi } from './api/withApi'
+import Api from './api/Api'
+import BigNumber from 'bignumber.js'
+import Account from './nebulify/src/Account'
 
 const styles = (theme: Theme) => ({
   root: {
     flexGrow: 1,
     zIndex: 1,
-    overflow: 'hidden' as 'hidden',
-    position: 'relative' as 'relative',
-    display: 'flex' as 'flex',
+    overflow: 'hidden',
+    position: 'relative',
+    display: 'flex',
     minHeight: '100vh'
-  },
+  } as CSSProperties,
   content: {
     flexGrow: 1,
     backgroundColor: theme.palette.background.default,
@@ -30,10 +35,10 @@ const styles = (theme: Theme) => ({
     paddingTop: '56.25%' // 16:9
   },
   drawerPaper: {
-    position: 'relative' as 'relative',
+    position: 'relative',
     width: 240,
     height: '100%'
-  },
+  } as CSSProperties,
   icon: {
     color: 'rgba(255, 255, 255, 0.54)'
   },
@@ -45,28 +50,26 @@ const styles = (theme: Theme) => ({
   } as CSSProperties
 })
 
-export const categories: string[] = [
-  'Cats',
-  'Dogs',
-  'Memes',
-  'Burgers',
-  'Cartoons',
-  'Fun',
-  'Art',
-  'Nufflee',
-  'TheChoconut',
-  'Other'
-]
-
 const isValidCategory = (categoryQueryName: string) => {
   return categories.includes(categoryQueryName)
 }
 
+const theme = createMuiTheme({
+  palette: {
+    primary: indigo,
+    secondary: red
+  }
+})
+
+type AppProps = WithStyles & RouteComponentProps<{}> & {
+  api: Api
+}
+
 @withStyles(styles)
-class App extends React.Component<WithStyles & RouteComponentProps<{}>, {
+@withApi()
+class App extends React.Component<AppProps, {
   images: Image[]
 }> {
-
   category = {
     name: categories[0],
     updated: false
@@ -104,7 +107,7 @@ class App extends React.Component<WithStyles & RouteComponentProps<{}>, {
     return categoryButtonList
   }
 
-  updateImageList = (imageCount: number = 20, append: boolean = false) => {
+  updateImageList = async (imageCount: number = 20, append: boolean = false) => {
     const images = append ? this.state.images : []
     const categoryName = this.category.name
     const min = 100
@@ -112,17 +115,44 @@ class App extends React.Component<WithStyles & RouteComponentProps<{}>, {
     const currentIndex = append ? this.state.images.length + 1 : 1
     const forLength = append ? this.state.images.length + imageCount : imageCount
 
-    for (let index = currentIndex; index <= forLength; index++) {
-      const category = categoryName === 'Random' ? categories[Math.floor(Math.random() * categories.length)] : categoryName
-      images.push({
+    const category = categoryName === 'Random' ? categories[Math.floor(Math.random() * categories.length)] : categoryName
+
+    const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
+
+    account.setPrivateKey('your private key')
+
+    const result = await this.props.api.query(forLength, 'Random', account, new BigNumber(0), true)
+
+    for (let i = 0; i < forLength; i++) {
+      images.push((JSON.parse(result.result) as any).map((image, index): Image => {
+        return {
+          index,
+          name: image.name,
+          src: image.base64,
+          author: image.author,
+          width: image.width,
+          height: image.height
+        }
+      })[0])
+    }
+
+    /*for (let index = currentIndex; index <= forLength; index++) {
+
+      // {"result":"{"width":676,"height":437,"base64":"","name":"contributions (2).png","category":-1}","execute_err":"","estimate_gas":"20421"}
+
+      newImages.push({
+        index,
+
+      })
+      /!*newImages.push({
         index,
         name: `${category}-${index}`,
         src: `https://source.unsplash.com/random?${category},${index}`,
         author: 'Nuff Lee',
         width: Math.floor(Math.random() * (max - min + 1)) + min,
         height: Math.floor(Math.random() * (max - min + 1)) + min
-      })
-    }
+      })*!/
+    }*/
 
     this.category.updated = true
     this.setState({ images })
@@ -132,47 +162,41 @@ class App extends React.Component<WithStyles & RouteComponentProps<{}>, {
     const { classes } = this.props
 
     return (
-      <div className={classes.root}>
-        <CssBaseline/>
-        <TopBar/>
-        <Drawer variant='permanent' classes={{
-          paper: classes.drawerPaper
-        }}>
-          <div className={classes.toolbar}/>
-          <ListSubheader component='div'>Categories</ListSubheader>
-          {this.renderCategoryButtons()}
-          <ListSubheader component='div' disableSticky={true} className={classes.versionText}>imgCube Web v1.0</ListSubheader>
-        </Drawer>
-        <div className={classes.content}>
-          <div className={classes.toolbar}/>
-          <Switch>
-            <Route exact path='/upload' component={UploadImage}/>
-            <Route path='/category/:id' render={({ match }) => {
-              if (!isValidCategory(match.params.id)) {
+      <MuiThemeProvider theme={theme}>
+        <div className={classes.root}>
+          <CssBaseline/>
+          <TopBar/>
+          <Drawer variant='permanent' classes={{
+            paper: classes.drawerPaper
+          }}>
+            <div className={classes.toolbar}/>
+            <ListSubheader component='div'>Categories</ListSubheader>
+            {this.renderCategoryButtons()}
+            <ListSubheader component='div' disableSticky={true} className={classes.versionText}>imgCube Web v1.0</ListSubheader>
+          </Drawer>
+          <div className={classes.content}>
+            <div className={classes.toolbar}/>
+            <Switch>
+              <Route exact path='/upload' component={UploadImagePage}/>
+              <Route path='/category/:id' render={({ match }) => {
+                if (!isValidCategory(match.params.id)) {
+                  return (
+                    <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images}/>
+                  )
+                }
+              }}/>
+              <Route path='/' render={() => {
+                if (this.category.name !== 'Random') {
+                  this.category = { name: 'Random', updated: false }
+                }
                 return (
-                  <Typography variant='title'>
-                    Category '<strong>{match.params.id}</strong>' does not exist!
-                  </Typography>
+                  <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images}/>
                 )
-              }
-              if (this.category.name !== match.params.id) {
-                this.category = { name: match.params.id, updated: false }
-              }
-              return (
-                <Gallery infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images}/>
-              )
-            }}/>
-            <Route path='/' render={() => {
-              if (this.category.name !== 'Random') {
-                this.category = { name: 'Random', updated: false }
-              }
-              return (
-                <Gallery infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images}/>
-              )
-            }}/>
-          </Switch>
+              }}/>
+            </Switch>
+          </div>
         </div>
-      </div>
+      </MuiThemeProvider>
     )
   }
 }

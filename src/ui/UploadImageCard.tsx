@@ -1,10 +1,11 @@
 import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, TextField, Theme, Typography } from 'material-ui'
 import * as React from 'react'
-import { categories } from '../App'
+import { CSSProperties } from 'material-ui/styles/withStyles'
+import { categories } from '../models/categories'
 import EditableText from './EditableText'
 import { WithStyles, withStyles } from './withStyles'
 import { UploadImage } from '../models/UploadImage'
-import { DEFAULT_AUTHOR } from '../routes/UploadImage'
+import { DEFAULT_AUTHOR } from '../routes/UploadImagePage'
 
 const styles = (theme: Theme) => ({
   categoryPicker: {
@@ -13,9 +14,9 @@ const styles = (theme: Theme) => ({
   },
   card: {
     width: 345, // TODO: Make the cards responsive (like a card row), but they cannot rescale by changing their description / name.
-    float: 'left' as 'left',
+    float: 'left',
     margin: '20px'
-  },
+  } as CSSProperties,
   media: {
     height: 0,
     paddingTop: '56.25%'
@@ -25,21 +26,21 @@ const styles = (theme: Theme) => ({
   }
 })
 
-type UploadedImageProps = WithStyles & {
+type UploadedImageCardProps = WithStyles & {
   fileData: UploadImage,
   index: number,
   removeFileCallback: (index: number) => void
 }
 
 @withStyles(styles)
-export default class UploadedImage extends React.Component<UploadedImageProps, {
+export default class UploadImageCard extends React.Component<UploadedImageCardProps, {
   file: UploadImage
 }> {
   state = {
     file: this.props.fileData
   }
 
-  constructor(props: UploadedImageProps & WithStyles) {
+  constructor(props: UploadedImageCardProps) {
     super(props)
   }
 
@@ -73,7 +74,7 @@ export default class UploadedImage extends React.Component<UploadedImageProps, {
     })
   }
 
-  shouldComponentUpdate(nextProps: UploadedImageProps & WithStyles) {
+  shouldComponentUpdate(nextProps: UploadedImageCardProps) {
     if (nextProps.fileData !== this.props.fileData) {
       this.state.file = nextProps.fileData
     }

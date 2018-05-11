@@ -7,7 +7,7 @@
   "jsRules": {},
   "rules": {
     "semicolon": [true, "never"],
-    "quotemark": false,
+    "quotemark": [true, "single", "jsx-single"],
     "indent": [true, "spaces", 2],
     "whitespace": [true, "check-branch"],
     "trailing-comma": [true, {
@@ -16,7 +16,14 @@
       }
     ],
     "ordered-imports": false,
+    "no-empty-interface": false,
+    "no-return-await": false,
+    "no-debugger": false,
+    "member-ordering": false,
+    "forin": false,
     "no-object-literal-type-assertion": false,
+    "no-duplicate-imports": false,
+    "no-shadowed-variable": false,
     "object-literal-sort-keys": false,
     "member-access": false,
     "no-console": false,

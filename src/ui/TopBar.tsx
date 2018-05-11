@@ -26,7 +26,7 @@ const styles = (theme: Theme) => ({
 class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
 
   state = {
-    currentEndpoint: "Mainnet"
+    currentEndpoint: 'Mainnet'
   }
 
   constructor(props: any) {
@@ -46,8 +46,8 @@ class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
               Current endpoint:
             </Typography>
             <Select autoWidth={true} value={this.state.currentEndpoint} onChange={(event) => this.setState({ currentEndpoint: event.target.value })}>
-              <MenuItem value={"Mainnet"}>Mainnet</MenuItem>
-              <MenuItem value={"Testnet"}>Testnet</MenuItem>
+              <MenuItem value={'Mainnet'}>Mainnet</MenuItem>
+              <MenuItem value={'Testnet'}>Testnet</MenuItem>
             </Select>
             <Button color='inherit' onClick={() => this.props.history.push('/upload')}>
               <FileUpload/>

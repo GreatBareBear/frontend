@@ -4,7 +4,7 @@ import EditIcon from '@material-ui/icons/Edit'
 import createTypography, { Style, TypographyStyle } from 'material-ui/styles/createTypography'
 import createPalette from 'material-ui/styles/createPalette'
 import { IconButton, TextField, Theme, Typography } from 'material-ui'
-import classNames = require('classnames')
+
 import { TypographyProps } from 'material-ui/Typography'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
@@ -14,27 +14,27 @@ import { CSSProperties } from 'material-ui/styles/withStyles'
 import { WithStyles, withStyles } from './withStyles'
 
 const styles = (theme: Theme) => ({
-    typography: {
-        wordWrap: 'break-word' as 'break-word',
-        width: '90%',
-        display: 'inline'
-    },
-    root: {
-        display: 'flex',
-        justifyContent: 'flex-start',
-        alignItems: 'center'
-    },
-    button: {
-        width: '36px',
-        height: '36px'
-    },
-    editableTextField: {
-        'flex': 1,
-        '& div input': {
-            wordWrap: 'break-word' as 'break-word',
-            wordBreak: 'break-all' as 'break-all'
-        }
-    }
+  typography: {
+    wordWrap: 'break-word',
+    width: '90%',
+    display: 'inline'
+  } as CSSProperties,
+  root: {
+    display: 'flex',
+    justifyContent: 'flex-start',
+    alignItems: 'center'
+  },
+  button: {
+    width: '36px',
+    height: '36px'
+  },
+  editableTextField: {
+    'flex': 1,
+    '& div input': {
+      wordWrap: 'break-word',
+      wordBreak: 'break-all'
+    } as CSSProperties
+  }
 })
 
 type EditableTextProps = WithStyles & {
@@ -87,7 +87,7 @@ export default class EditableText extends React.Component<EditableTextProps> {
   render() {
     const { classes } = this.props
     const typography: TypographyStyle = createTypography(createPalette({}), {})[this.props.typographyVariant]
-    const nativeInputProps = { style: typography } 
+    const nativeInputProps = { style: typography }
     if (this.editState) {
       return (
         <div className={classes.root}>

@@ -1,4 +1,4 @@
-import { CircularProgress, LinearProgress, Theme } from 'material-ui'
+import { CircularProgress, LinearProgress } from 'material-ui'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
@@ -15,7 +15,7 @@ const styles = {
   }
 }
 
-type GalleryProps = WithStyles & {
+type GalleryPageProps = WithStyles & {
   images: Image[],
   pushMoreCallback: (count?: number, append?: boolean) => void,
   infiniteScrollCooldownLength: number,
@@ -24,14 +24,14 @@ type GalleryProps = WithStyles & {
 
 @withStyles(styles)
 @observer
-export default class Gallery extends React.Component<GalleryProps, any> {
+export default class GalleryPage extends React.Component<GalleryPageProps, any> {
   infiniteScrollCooldownActive = false
   handleScrollIntervalId: NodeJS.Timer
   @observable loadedImagesCount = 0
   @observable imagesLoadedPercent = 0
   galleryReference: any
 
-  constructor(props: GalleryProps) {
+  constructor(props: GalleryPageProps) {
     super(props)
   }
 
@@ -65,6 +65,8 @@ export default class Gallery extends React.Component<GalleryProps, any> {
   }
 
   get isGalleryLoaded() {
+    console.log(this.loadedImagesCount, this.props.images.length)
+
     return this.loadedImagesCount === this.props.images.length
   }
 
@@ -77,14 +79,14 @@ export default class Gallery extends React.Component<GalleryProps, any> {
   }
 
   generateGalleryClassName() {
-    return 'Gallery' + (this.isGalleryReady ? ' GalleryLoaded' : '')
+    return 'GalleryPage' + (this.isGalleryReady ? ' GalleryLoaded' : '')
   }
 
   get isGalleryReady() {
     return (this.isGalleryLoaded || this.isGalleryScrollable) && this.loadedImagesCount !== 0
   }
 
-  componentWillReceiveProps(nextProps: GalleryProps) {
+  componentWillReceiveProps(nextProps: GalleryPageProps) {
     if (nextProps.currentCategory !== this.props.currentCategory) {
       this.loadedImagesCount = 0
 
@@ -96,17 +98,21 @@ export default class Gallery extends React.Component<GalleryProps, any> {
 
   // Deprecated by MobX API, shouldComponentUpdate function should only be handled by MobX's observer.
   // Fixes the gallery scrolling issue where scrolling wouldn't update the component (and that is required).
-  shouldComponentUpdate(nextProps: GalleryProps) {
+  shouldComponentUpdate(nextProps: GalleryPageProps) {
     return nextProps.images !== this.props.images || !this.isGalleryLoaded
   }
 
   render() {
     const { classes, images } = this.props
     const childElements = images.map((image: Image) => {
+      console.log('image ', image)
+
       return (
         <GalleryImage key={image.index} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
       )
     })
+
+    console.log(this.isGalleryLoaded)
 
     return (
       <React.Fragment>

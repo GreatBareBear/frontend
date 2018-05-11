@@ -37,24 +37,24 @@ export default class FileDeleteDialog extends React.Component<DeleteDialogProps>
       return (
           <Dialog
             open={this.props.files.length > 0}
-            aria-labelledby="alert-dialog-title"
-            aria-describedby="alert-dialog-description"
+            aria-labelledby='alert-dialog-title'
+            aria-describedby='alert-dialog-description'
           >
           {this.props.files.length > 0 &&
             <React.Fragment>
-              <DialogTitle id="alert-dialog-title">Cancel upload</DialogTitle>
+              <DialogTitle id='alert-dialog-title'>Cancel upload</DialogTitle>
               <DialogContent>
-                  <DialogContentText id="alert-dialog-description">
-                    This action <strong>will cancel the upload for {this.props.files.length === 1 ? "selected image '"+this.props.files[0].name+"'" : this.props.files.length + " selected images"}</strong> and <strong>cannot be undone</strong>.
+                  <DialogContentText id='alert-dialog-description'>
+                    This action <strong>will cancel the upload for {this.props.files.length === 1 ? 'selected image \''+this.props.files[0].name+'\'' : this.props.files.length + ' selected images'}</strong> and <strong>cannot be undone</strong>.
                     <br />
                     Are you sure you want to cancel the upload?
                   </DialogContentText>
               </DialogContent>
               <DialogActions>
-              <Button onClick={() => this.handleFileDeletion(false)} color="primary">
+              <Button onClick={() => this.handleFileDeletion(false)} color='primary'>
                     No
                 </Button>
-              <Button onClick={() => this.handleFileDeletion(true)} color="secondary" autoFocus>
+              <Button onClick={() => this.handleFileDeletion(true)} color='secondary' autoFocus>
                     Yes
                 </Button>
               </DialogActions>
