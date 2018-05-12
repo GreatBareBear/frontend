@@ -144,9 +144,9 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     for (const image of this.state.files) {
       const imageData = await getImageData(image)
       const compressedBase64 = LZString.compress(imageData.base64)
-      const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
+      const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
-      account.setPrivateKey('')
+      account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
 
       console.log(imageData.base64)
 

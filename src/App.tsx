@@ -118,32 +118,43 @@ class App extends React.Component<AppProps, {
     const images = append ? this.state.images : []
     const categoryName = this.category.name
 
-    const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
+    const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
-    account.setPrivateKey('')
+    account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
 
     this.setState({ galleryShouldBeLoading: true, anyImages: true })
 
     const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0))
 
-    if (result.result === '[]') {
+    /*if (result.result === '[]') {
       this.setState({ images: [], galleryShouldBeLoading: false, anyImages: false })
       this.category.updated = true
 
       return
+    }*/
+
+    const rawImages = /*JSON.parse(result.result) as any*/[]
+    for (let index = 1; index <= 10; index++) {
+      rawImages.push({
+        name: 'Random',
+        base64: `https://images.unsplash.com/reserve/oMRKkMc4RSq7N91OZl0O_IMG_8309.jpg?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max&ixid=eyJhcHBfaWQiOjF9&s=0228262d6df3a01cbd598604aadb1940`,
+        author: 'author',
+        width: 1000,
+        height: 1000
+      })
     }
-
-    const rawImages = JSON.parse(result.result) as any
-
+    console.log('LENGTH',rawImages.length)
+    
 /*    if (_.isEqual(rawImages.length, this.state.images.length)) {
       return
     }*/
-
+    const imagesLength = this.state.images.length
     for (const [index, rawImage] of rawImages.entries()) {
+      const imageIndex = index + imagesLength
       images.push({
-        index,
-        name: rawImage.name,
-        src: LZString.decompress(rawImage.base64),
+        index: imageIndex,
+        name: rawImage.name + imageIndex,
+        src: rawImage.base64,
         author: rawImage.author,
         width: rawImage.width,
         height: rawImage.height
@@ -179,9 +190,9 @@ class App extends React.Component<AppProps, {
             <Switch>
               <Route exact path='/upload' component={UploadImagePage}/>
               <Route path='/category/:id' render={({ match }) => {
-                if (isValidCategory(match.params.id)) {
+                if (isValidCategory(match.params.id) && this.category.name !== match.params.id) {
                   this.category.name = match.params.id
-
+                  this.category.updated = false
                   return (
                     <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
                   )

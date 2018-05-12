@@ -53,7 +53,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   }
 
   handleScroll = () => {
-    if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1300 && !this.infiniteScrollCooldownActive && this.isGalleryReady && this.isGalleryLoaded) {
+    if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1000 && !this.infiniteScrollCooldownActive && this.isGalleryReady && this.isGalleryLoaded) {
       this.props.pushMoreCallback(10, true)
       this.infiniteScrollCooldownActive = true
       setTimeout(() => {
@@ -74,15 +74,15 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   }
 
   get isGalleryLoaded() {
-    return (this.loadedImagesCount === this.props.images.length && (this.loadedImagesCount !== 0)) || this.props.anyImages === false
+    return (this.loadedImagesCount === this.props.images.length) || this.props.anyImages === false
   }
 
   get isGalleryScrollable() {
     if (this.isGalleryLoaded) {
-      return this.props.images.length >= 20
+      return this.props.images.length >= 10
     }
 
-    return this.props.images.length > 20
+    return this.props.images.length > 10
   }
 
   generateGalleryClassName() {
@@ -129,19 +129,17 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
       )
     }
 
-    if (this.isGalleryLoaded === false && this.props.shouldBeLoading) {
-      return (
-        <div className='GalleryLoadingMore'>
-          <CircularProgress color='primary'/>
-        </div>
-      )
-    }
-
     return (
       <React.Fragment>
-        <Masonry ref={(ref) => this.galleryReference = ref} elementType='div' className={this.generateGalleryClassName()}>
-          {childElements}
-        </Masonry>
+        {(!this.props.shouldBeLoading || this.isGalleryScrollable) &&
+          <Masonry ref={(ref) => this.galleryReference = ref} elementType='div' className={this.generateGalleryClassName()}>
+            {childElements}
+          </Masonry>}
+        
+        {((this.isGalleryLoaded === false && this.props.shouldBeLoading) || this.isGalleryScrollable) && 
+          <div className='GalleryLoadingMore'>
+            <CircularProgress color='primary' />
+          </div>}
       </React.Fragment>
     )
   }
