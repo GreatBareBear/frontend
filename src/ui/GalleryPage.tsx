@@ -74,7 +74,6 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   }
 
   get isGalleryLoaded() {
-    console.log('any images ', this.props.anyImages)
     return (this.loadedImagesCount === this.props.images.length && (this.loadedImagesCount !== 0)) || this.props.anyImages === false
   }
 
@@ -97,6 +96,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   componentWillReceiveProps(nextProps: GalleryPageProps) {
     if (nextProps.currentCategory !== this.props.currentCategory) {
       this.loadedImagesCount = 0
+      this.props.pushMoreCallback()
 
       return true
     } else {
@@ -125,7 +125,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
     if (childElements.length === 0 && this.isGalleryLoaded) {
       return (
-        <Typography className={classes.noImagesText}>No images have been uploaded yet. Why don't you upload one&nbsp; <Link to='/upload'>here</Link>?</Typography>
+        <Typography className={classes.noImagesText}>No images have been uploaded in this category yet. Why don't you upload one&nbsp; <Link to='/upload'>here</Link>?</Typography>
       )
     }
 

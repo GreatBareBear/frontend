@@ -5,6 +5,7 @@ import Dropzone, { ImageFile } from 'react-dropzone'
 import Masonry from 'react-masonry-component'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import { observer } from 'mobx-react'
+import * as LZString from 'lz-string'
 import UploadImageCard from '../ui/UploadImageCard'
 import { WithStyles, withStyles } from '../ui/withStyles'
 import { UploadImage } from '../models/UploadImage'
@@ -142,12 +143,14 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   upload = async () => {
     for (const image of this.state.files) {
       const imageData = await getImageData(image)
-
+      const compressedBase64 = LZString.compress(imageData.base64)
       const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
 
-      account.setPrivateKey('your private key')
+      account.setPrivateKey('')
 
-      const result = await this.props.api.upload(imageData.width, imageData.height, imageData.base64, image.name, image.author, image.category, account, new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toString().replace('.', '')))
+      console.log(imageData.base64)
+
+      const result = await this.props.api.upload(imageData.width, imageData.height, compressedBase64, image.name, image.author, image.category, account, new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toString().replace('.', '')))
 
       // TODO: Show error
     }
@@ -168,9 +171,8 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
           <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.files)}>
             {this.state.files.length > 1 ? 'Delete all' : 'Delete'}
           </Button>
-          {this.state.price && this.state.usdPrice && <Typography className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
+          {this.state.price && this.state.usdPrice && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
         </Typography>
-
         <Masonry elementType={'div'}>
           {this.state.files.map((file: UploadImage, index: number) => {
             return (

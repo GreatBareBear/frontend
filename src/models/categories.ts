@@ -11,9 +11,7 @@ export const categories: string[] = [
 ]
 
 export function getCategoryId(category: string) {
-  const index = categories.indexOf(category)
-
-  return index === 0 ? 0 : index - 1
+  return categories.indexOf(category)
 }
 
 export function isValidCategory(categoryQueryName: string) {

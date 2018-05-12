@@ -4,6 +4,8 @@ import { CSSProperties } from 'material-ui/styles/withStyles'
 import * as React from 'react'
 import { Route, RouteComponentProps, Switch, withRouter } from 'react-router'
 import { indigo, red } from 'material-ui/colors'
+import * as _ from 'lodash'
+import BigNumber from 'bignumber.js'
 import UploadImagePage from './routes/UploadImagePage'
 import GalleryPage from './ui/GalleryPage'
 import TopBar from './ui/TopBar'
@@ -12,9 +14,8 @@ import { Image } from './models/Image'
 import { categories, isValidCategory } from './models/categories'
 import { withApi } from './api/withApi'
 import Api from './api/Api'
-import BigNumber from 'bignumber.js'
 import Account from './nebulify/src/Account'
-import { observer } from 'mobx-react'
+import * as LZString from 'lz-string'
 
 const styles = (theme: Theme) => ({
   root: {
@@ -109,49 +110,45 @@ class App extends React.Component<AppProps, {
   }
 
   updateImageList = async (imageCount: number = 20, append: boolean = false) => {
+
     if (this.state.galleryShouldBeLoading) {
       return
     }
 
     const images = append ? this.state.images : []
     const categoryName = this.category.name
-    const min = 100
-    const max = 300
-    const currentIndex = append ? this.state.images.length + 1 : 1
-    const forLength = append ? this.state.images.length + imageCount : imageCount
 
     const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
 
-    account.setPrivateKey('your private key')
+    account.setPrivateKey('')
 
     this.setState({ galleryShouldBeLoading: true, anyImages: true })
 
-    const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0), true)
+    const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0))
 
-    if (result.result === '') {
+    if (result.result === '[]') {
       this.setState({ images: [], galleryShouldBeLoading: false, anyImages: false })
+      this.category.updated = true
 
       return
     }
 
     const rawImages = JSON.parse(result.result) as any
 
-    if (rawImages.length === this.state.images.length) {
+/*    if (_.isEqual(rawImages.length, this.state.images.length)) {
       return
-    }
+    }*/
 
     for (const [index, rawImage] of rawImages.entries()) {
       images.push({
         index,
         name: rawImage.name,
-        src: rawImage.base64,
+        src: LZString.decompress(rawImage.base64),
         author: rawImage.author,
         width: rawImage.width,
         height: rawImage.height
       })
     }
-
-    console.log('done')
 
     this.category.updated = true
     this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
@@ -182,7 +179,9 @@ class App extends React.Component<AppProps, {
             <Switch>
               <Route exact path='/upload' component={UploadImagePage}/>
               <Route path='/category/:id' render={({ match }) => {
-                if (!isValidCategory(match.params.id)) {
+                if (isValidCategory(match.params.id)) {
+                  this.category.name = match.params.id
+
                   return (
                     <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
                   )
@@ -192,8 +191,6 @@ class App extends React.Component<AppProps, {
                 if (this.category.name !== 'Random') {
                   this.category = { name: 'Random', updated: false }
                 }
-
-                console.log('galleryShouldBeLoading', this.state.galleryShouldBeLoading)
 
                 return (
                   <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>

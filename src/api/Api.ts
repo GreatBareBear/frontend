@@ -3,9 +3,9 @@ import { getCategoryId } from '../models/categories'
 import Nebulas from '../nebulify/src/Nebulas'
 import Account from '../nebulify/src/Account'
 import Transaction from '../nebulify/src/Transaction'
-import { observable } from 'mobx'
+import * as _ from 'lodash'
 
-const contractAddress = 'n1ih7EmQAzrwTucvUnQbU1wxxNTzVofcELV'
+const contractAddress = 'n22MpZjRfwz8tbL7cecrNFAGQ1jDedTJQjz'
 
 type CallResult = ContractCallResult & {
   transaction?: {
@@ -16,6 +16,7 @@ type CallResult = ContractCallResult & {
 
 export default class Api {
   private nebulas: Nebulas
+  private account: Account
   public isTestnet: boolean
 
   get chainId() {
@@ -33,32 +34,49 @@ export default class Api {
   async upload(width: number, height: number, base64: string, name: string, author: string, category: string, sender: Account, value: BigNumber, dryRun: boolean = false) {
     // [{"width": 100, "height": 100, "base64": "", "name": "a", "username": "user1", "category": 0}]
 
-    return this.call('upload', [{
-      width,
-      height,
-      base64,
-      name,
-      author,
-      category: getCategoryId(category)
-    }], sender, value, dryRun)
+    const chunks = base64.match(new RegExp(`.{1,${43000}}`, `g`))
+
+    /*
+        const result = await this.call('upload', [{
+          width,
+          height,
+          chunks[0],
+          name,
+          author,
+          category: getCategoryId(category) - 1
+        }, chunks.length === 1], sender, value, dryRun)
+
+        if (chunks.length > 1) {
+          for (const chunk of chunks) {
+            this.call('appendBase64', [])
+          }
+        }
+
+        return result*/
   }
 
-  async query(count: number, offset: number, category: string, sender: Account, value: BigNumber, dryRun: boolean = false) {
+  async getImageCount() {
+    // return this.call('getImageCount', [], )
+  }
+
+  async getImagesUploadingCount() {
+
+  }
+
+  async query(count: number, offset: number, category: string, sender: Account, value: BigNumber) {
     const categoryId = getCategoryId(category)
 
     const payload = [count, offset, categoryId]
 
     if (categoryId === 0) {
       payload.splice(-1, 1)
+    } else {
+      payload[2]--
     }
 
-    return this.call('query', payload, sender, value, dryRun)
-  }
+    console.log(payload[2])
 
-  setApiOptions(options: ApiOptions) {
-    this.nebulas.setApi(options)
-
-    this.isTestnet = options.testnet
+    return this.call('query', payload, sender, value, true)
   }
 
   async call(functionName: string, payload: {}, sender: Account, value: BigNumber, dryRun: boolean): Promise<CallResult> {
@@ -69,6 +87,8 @@ export default class Api {
             function: functionName,
             args: JSON.stringify(payload)
           }
+
+          console.log(JSON.stringify(contract))
 
           this.nebulas.api.call({
             from: sender.getAddress(),
@@ -100,5 +120,15 @@ export default class Api {
         })
       })
     })
+  }
+
+  setApiOptions(options: ApiOptions) {
+    this.nebulas.setApi(options)
+
+    this.isTestnet = options.testnet
+  }
+
+  setAccount(account: Account) {
+    this.account = account
   }
 }
