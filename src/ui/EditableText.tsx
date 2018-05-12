@@ -3,13 +3,12 @@ import DoneIcon from '@material-ui/icons/Done'
 import EditIcon from '@material-ui/icons/Edit'
 import createTypography, { Style, TypographyStyle } from 'material-ui/styles/createTypography'
 import createPalette from 'material-ui/styles/createPalette'
-import { IconButton, TextField, Theme, Typography } from 'material-ui'
+import { IconButton, TextField, Theme, Tooltip, Typography } from 'material-ui'
 
 import { TypographyProps } from 'material-ui/Typography'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
-import { CSSTransition, TransitionGroup } from 'react-transition-group'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import { WithStyles, withStyles } from './withStyles'
 
@@ -72,7 +71,7 @@ export default class EditableText extends React.Component<EditableTextProps> {
       } else {
         this.currentValue = this.savedValue
       }
-      
+
     }
   }
 
@@ -92,14 +91,17 @@ export default class EditableText extends React.Component<EditableTextProps> {
       return (
         <div className={classes.root}>
           <TextField className={classes.editableTextField} InputProps={nativeInputProps} value={this.currentValue} onChange={(e) => this.updateValue(e)} multiline={true}/>
-          <IconButton color='primary' className={classes.button} aria-label='Stop editing and discard changes' onClick={() => this.updateEditState(false)}>
-            <CloseIcon />
-          </IconButton>
-          {this.valueUpdated && 
-          <IconButton color='primary' className={classes.button} aria-label='Stop editing and save changes' onClick={() => this.updateEditState(true)}>
-            <DoneIcon />
-          </IconButton>}
-          
+          <Tooltip title='Cancel'>
+            <IconButton color='primary' className={classes.button} aria-label='Stop editing and discard changes' onClick={() => this.updateEditState(false)}>
+              <CloseIcon/>
+            </IconButton>
+          </Tooltip>
+          {this.valueUpdated &&
+          <Tooltip title='Save'>
+            <IconButton color='primary' className={classes.button} aria-label='Stop editing and save changes' onClick={() => this.updateEditState(true)}>
+              <DoneIcon/>
+            </IconButton>
+          </Tooltip>}
         </div>
       )
     }
@@ -109,9 +111,11 @@ export default class EditableText extends React.Component<EditableTextProps> {
         <Typography variant={this.props.typographyVariant} component={this.props.typographyComponent} className={classes.typography}>
           {this.currentValue}
         </Typography>
-        <IconButton color='primary' className={classes.button} aria-label='Edit value' onClick={() => this.updateEditState()}>
-          <EditIcon/>
-        </IconButton>
+        <Tooltip title='Edit'>
+          <IconButton color='primary' className={classes.button} aria-label='Edit value' onClick={() => this.updateEditState()}>
+            <EditIcon/>
+          </IconButton>
+        </Tooltip>
       </div>
     )
   }

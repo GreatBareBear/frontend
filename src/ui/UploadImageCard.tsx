@@ -6,6 +6,8 @@ import EditableText from './EditableText'
 import { WithStyles, withStyles } from './withStyles'
 import { UploadImage } from '../models/UploadImage'
 import { DEFAULT_AUTHOR } from '../routes/UploadImagePage'
+import { calculateImagePrice, getImageData } from '../models/Image'
+import BigNumber from 'bignumber.js'
 
 const styles = (theme: Theme) => ({
   categoryPicker: {
@@ -15,7 +17,7 @@ const styles = (theme: Theme) => ({
   card: {
     width: 345, // TODO: Make the cards responsive (like a card row), but they cannot rescale by changing their description / name.
     float: 'left',
-    margin: '20px'
+    margin: '20px 20px 20px 0px'
   } as CSSProperties,
   media: {
     height: 0,
@@ -23,7 +25,12 @@ const styles = (theme: Theme) => ({
   },
   textField: {
     width: '100%'
-  }
+  },
+  priceText: {
+    marginLeft: 'auto',
+    textAlign: 'end',
+    paddingRight: '12px'
+  } as CSSProperties
 })
 
 type UploadedImageCardProps = WithStyles & {
@@ -34,14 +41,35 @@ type UploadedImageCardProps = WithStyles & {
 
 @withStyles(styles)
 export default class UploadImageCard extends React.Component<UploadedImageCardProps, {
-  file: UploadImage
+  file: UploadImage,
+  price: BigNumber,
+  usdPrice: BigNumber
 }> {
   state = {
-    file: this.props.fileData
+    file: this.props.fileData,
+    price: null,
+    usdPrice: null
   }
 
   constructor(props: UploadedImageCardProps) {
     super(props)
+  }
+
+  async componentWillMount() {
+    const data = await getImageData(this.props.fileData)
+
+    fetch('https://api.coinmarketcap.com/v2/ticker/1908/').then((response: any) => {
+      response.json().then((ticker) => {
+        const nasPrice = new BigNumber(calculateImagePrice(data).toString().substring(17, 0))
+
+        this.setState({
+          price: nasPrice,
+          usdPrice: new BigNumber(new BigNumber(ticker.data.quotes.USD.price).multipliedBy(nasPrice) .toString().substring(6, 0))
+        })
+      })
+    })
+
+    this.state.file.category = 'Other'
   }
 
   updateCategory(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -92,28 +120,25 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
         <CardContent>
           <EditableText defaultValue={file.name} typographyVariant={'headline'} onValueApplied={(value) => this.updateName(index, value)}/>
           <TextField id='with-placeholder' label='Image author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.file.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
-          {file.type === 'image/gif' && <Typography component='p'>
-              <strong>If GIF image is animated, it will get replaced with a static image (only the first frame will be taken).</strong>
-            </Typography>
-          }
           <FormControl className={this.props.classes.categoryPicker}>
             <InputLabel htmlFor='categoryPicker'>Category</InputLabel>
             <Select name={file.name} value={this.state.file.category} onChange={(event) => this.updateCategory(event)} inputProps={{
               id: 'categoryPicker'
             }}>
-              {categories.map((category: string, categoryIndex: number) => (
+              {categories.slice(1).map((category: string, categoryIndex: number) => (
                 <MenuItem value={category} key={categoryIndex}>{category}</MenuItem>
               ))}
             </Select>
           </FormControl>
         </CardContent>
         <CardActions>
-          <Button size='small' color='primary' onClick={() => this.props.removeFileCallback(index)}>
-            Cancel
+          <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
+            Delete
           </Button>
           <Button size='small' color='primary'>
-            Upload image
+            Upload
           </Button>
+          {this.state.price && this.state.usdPrice && <Typography className={classes.priceText}>{this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
         </CardActions>
       </Card>
     )

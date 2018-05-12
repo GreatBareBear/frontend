@@ -15,6 +15,7 @@
         "multiline": "never"
       }
     ],
+    "no-empty": false,
     "ordered-imports": false,
     "no-empty-interface": false,
     "no-return-await": false,

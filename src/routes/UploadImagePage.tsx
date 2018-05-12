@@ -13,6 +13,7 @@ import { withApi } from '../api/withApi'
 import Api from '../api/Api'
 import BigNumber from 'bignumber.js'
 import Account from '../nebulify/src/Account'
+import { calculateImagePrice, getImageData } from '../models/Image'
 
 const styles = (theme: Theme) => ({
   dropZone: {
@@ -41,6 +42,12 @@ const styles = (theme: Theme) => ({
   uploadButton: {
     float: 'right',
     marginLeft: theme.spacing.unit * 2
+  } as CSSProperties,
+  totalPriceText: {
+    float: 'right',
+    verticalAlign: 'middle',
+    lineHeight: '37px',
+    marginRight: theme.spacing.unit * 2
   } as CSSProperties
 })
 
@@ -56,10 +63,47 @@ type UploadImagePageProps = WithStyles & {
 export default class UploadImagePage extends React.Component<UploadImagePageProps, {
   files: UploadImage[],
   filesToRemove: UploadImage[]
+  price: BigNumber,
+  usdPrice: BigNumber,
+  updated: boolean
 }> {
   state = {
     files: [] as UploadImage[],
-    filesToRemove: [] as UploadImage[]
+    filesToRemove: [] as UploadImage[],
+    price: null,
+    usdPrice: null,
+    updated: false
+  }
+
+  async componentDidUpdate() {
+    if (this.state.updated === false) {
+      return
+    }
+
+    if (this.state.files.length === 0) {
+      this.setState({
+        price: new BigNumber(0),
+        usdPrice: new BigNumber(0),
+        updated: false
+      })
+    }
+
+    for (const [index, file] of this.state.files.entries()) {
+      const data = await getImageData(file)
+
+      fetch('https://api.coinmarketcap.com/v2/ticker/1908/').then((response: any) => {
+        response.json().then((ticker) => {
+          const nasPrice = new BigNumber(calculateImagePrice(data).toString().substring(17, 0))
+          const usdPrice = new BigNumber(new BigNumber(ticker.data.quotes.USD.price).multipliedBy(nasPrice).toString().substring(6, 0))
+
+          this.setState((prevState) => ({
+            price: prevState.price !== null && index > 0 ? prevState.price.plus(nasPrice) : nasPrice,
+            usdPrice: prevState.usdPrice !== null && index > 0 ? prevState.usdPrice.plus(usdPrice) : usdPrice,
+            updated: false
+          }))
+        })
+      })
+    }
   }
 
   onDrop = (acceptedFiles: ImageFile[], rejectedFiles: ImageFile[]) => {
@@ -77,7 +121,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         file: element
       })
     })
-    this.setState({ files })
+    this.setState({ files, updated: true })
   }
 
   removeFiles(shouldRemoveFiles: boolean, filesToRemoveArray: UploadImage[]) {
@@ -86,7 +130,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
       files = files.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
     }
     filesToRemove = filesToRemove.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
-    this.setState({ files, filesToRemove })
+    this.setState({ files, filesToRemove, updated: true })
   }
 
   addToRemoveFilesList(files: UploadImage[]) {
@@ -95,33 +139,23 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     this.setState({ filesToRemove })
   }
 
-  upload = () => {
+  upload = async () => {
     for (const image of this.state.files) {
-      const reader = new FileReader()
+      const imageData = await getImageData(image)
 
-      reader.readAsDataURL(image.file)
+      const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
 
-      reader.onloadend = async () => {
-        const base64 = reader.result
+      account.setPrivateKey('your private key')
 
-        const tempImage = new Image()
+      const result = await this.props.api.upload(imageData.width, imageData.height, imageData.base64, image.name, image.author, image.category, account, new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toString().replace('.', '')))
 
-        tempImage.src = image.preview
-
-        // 01614273224043715847
-        // 016142732240437158
-
-        const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
-
-        account.setPrivateKey('your private key')
-
-        const result = await this.props.api.upload(tempImage.width, tempImage.height, base64, image.name, image.author, image.category, account, new BigNumber(new BigNumber(tempImage.width * tempImage.height).div(18300000).toString().replace('.', '')))
-      }
+      // TODO: Show error
     }
   }
 
   renderMasonry() {
     const { classes } = this.props
+
     return (
       <React.Fragment>
         <br/>
@@ -134,6 +168,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
           <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.files)}>
             {this.state.files.length > 1 ? 'Delete all' : 'Delete'}
           </Button>
+          {this.state.price && this.state.usdPrice && <Typography className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
         </Typography>
 
         <Masonry elementType={'div'}>
@@ -155,7 +190,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         <Typography variant='title'>
           Upload new image
         </Typography>
-        <Dropzone className={classes.dropZone} accept={'image/gif,image/png,image/jpeg,image/bmp'} onDrop={this.onDrop}>
+        <Dropzone className={classes.dropZone} accept={'image/png,image/jpeg,image/bmp'} onDrop={this.onDrop}>
           <div className={classes.dropZoneContent}>
             <FileUpload className={classes.uploadIcon}/>
             <Typography variant='headline'>
@@ -172,6 +207,3 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     )
   }
 }
-/*
-
-export default withApi(UploadImagePage)*/

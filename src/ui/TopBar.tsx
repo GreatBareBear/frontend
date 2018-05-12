@@ -1,10 +1,13 @@
 import FileUpload from '@material-ui/icons/FileUpload'
 import classNames = require('classnames')
-import { AppBar, Button, Toolbar, Typography, Select, MenuItem } from 'material-ui'
+import { AppBar, Button, Toolbar, Typography, Select, MenuItem, MuiThemeProvider, createMuiTheme } from 'material-ui'
 import { Theme } from 'material-ui/styles/'
 import * as React from 'react'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
 import { WithStyles, withStyles } from './withStyles'
+import { default as createPalette, Palette } from 'material-ui/styles/createPalette'
+import { withApi } from '../api/withApi'
+import Api from '../api/Api'
 
 const styles = (theme: Theme) => ({
   flex: {
@@ -22,15 +25,57 @@ const styles = (theme: Theme) => ({
   }
 })
 
-@withStyles(styles)
-class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
+type TopBarProps = WithStyles & RouteComponentProps<any> & {
+  api: Api,
+  onEndpointChange: (isTestnet: boolean) => void
+}
 
+const endpointSelectTheme = createMuiTheme({
+  overrides: {
+    MuiSelect: {
+      root: {
+        color: 'white'
+      },
+      select: {
+        color: 'white'
+      },
+      icon: {
+        color: 'white'
+      },
+      selectMenu: {
+        color: 'white'
+      }
+    },
+    MuiInput: {
+      underline: {
+        '&:before': {
+          backgroundColor: 'rgb(255, 255, 255)'
+        },
+        '&:hover&:before': {
+          backgroundColor: 'rgba(255, 255, 255, 0.87)'
+        }
+      }
+    }
+  }
+})
+
+@withStyles(styles)
+@withApi()
+class TopBar extends React.Component<TopBarProps> {
   state = {
-    currentEndpoint: 'Mainnet'
+    currentEndpoint: 'Testnet'
   }
 
   constructor(props: any) {
     super(props)
+  }
+
+  updateEndpoint = (event: any) => {
+    const isTestnet = event.target.value === 'Testnet'
+
+    this.props.api.setApiOptions({ testnet: isTestnet })
+    this.props.onEndpointChange(isTestnet)
+    this.setState({ currentEndpoint: event.target.value })
   }
 
   render() {
@@ -42,13 +87,12 @@ class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
             <Typography variant='title' color='inherit' className={classNames(classes.flex)}>
               <a className={classes.title} onClick={() => this.props.history.push('/')}>ImageCube</a>
             </Typography>
-            <Typography variant='subheading' color='inherit' style={{ marginRight: '8px' }}>
-              Current endpoint:
-            </Typography>
-            <Select autoWidth={true} value={this.state.currentEndpoint} onChange={(event) => this.setState({ currentEndpoint: event.target.value })}>
-              <MenuItem value={'Mainnet'}>Mainnet</MenuItem>
-              <MenuItem value={'Testnet'}>Testnet</MenuItem>
-            </Select>
+            <MuiThemeProvider theme={endpointSelectTheme}>
+              <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' onChange={this.updateEndpoint}>
+                <MenuItem value='Mainnet'>Mainnet</MenuItem>
+                <MenuItem value='Testnet'>Testnet</MenuItem>
+              </Select>
+            </MuiThemeProvider>
             <Button color='inherit' onClick={() => this.props.history.push('/upload')}>
               <FileUpload/>
               Upload new image
@@ -60,4 +104,6 @@ class TopBar extends React.Component<WithStyles & RouteComponentProps<any>> {
   }
 }
 
-export default withRouter(TopBar)
+export default withRouter(TopBar) as React.ComponentClass<{
+  onEndpointChange: (isTestnet: boolean) => void
+}>

@@ -43,8 +43,6 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
   render() {
     const { classes } = this.props
 
-    console.log(this.props.imageReference.src)
-
     return (
       <div key={this.props.imageReference.index} className='GalleryImage'>
         <img onLoad={() => this.showImage()} src={this.props.imageReference.src} alt={this.props.imageReference.name} title={this.props.imageReference.name}/>

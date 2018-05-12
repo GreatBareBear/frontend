@@ -13,7 +13,7 @@ export default class NebulasAPI {
       this.underlyingInstance.getAccountState(address).then((state) => {
         resolve({
           balance: state.balance,
-          nonce: state.nonce,
+          nonce: parseInt(state.nonce, 10),
           type: state.type
         } as AccountState)
       }).catch((error) => reject(error))

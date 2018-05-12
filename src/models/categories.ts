@@ -1,5 +1,5 @@
 export const categories: string[] = [
-  'Random',
+  'All',
   'Cats',
   'Dogs',
   'Memes',
@@ -14,4 +14,8 @@ export function getCategoryId(category: string) {
   const index = categories.indexOf(category)
 
   return index === 0 ? 0 : index - 1
+}
+
+export function isValidCategory(categoryQueryName: string) {
+  return categories.includes(categoryQueryName)
 }

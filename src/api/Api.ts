@@ -3,8 +3,9 @@ import { getCategoryId } from '../models/categories'
 import Nebulas from '../nebulify/src/Nebulas'
 import Account from '../nebulify/src/Account'
 import Transaction from '../nebulify/src/Transaction'
+import { observable } from 'mobx'
 
-const contractAddress = 'n1p1maywcziH1nMssAVFuehighTVsvqeZhm'
+const contractAddress = 'n1ih7EmQAzrwTucvUnQbU1wxxNTzVofcELV'
 
 type CallResult = ContractCallResult & {
   transaction?: {
@@ -15,7 +16,7 @@ type CallResult = ContractCallResult & {
 
 export default class Api {
   private nebulas: Nebulas
-  private isTestnet: boolean
+  public isTestnet: boolean
 
   get chainId() {
     return this.isTestnet ? 1001 : 1 // TODO: 1 might not be mainnet
@@ -42,8 +43,16 @@ export default class Api {
     }], sender, value, dryRun)
   }
 
-  async query(count: number, category: string, sender: Account, value: BigNumber, dryRun: boolean = false) {
-    return this.call('query', [count, getCategoryId(category)], sender, value, dryRun)
+  async query(count: number, offset: number, category: string, sender: Account, value: BigNumber, dryRun: boolean = false) {
+    const categoryId = getCategoryId(category)
+
+    const payload = [count, offset, categoryId]
+
+    if (categoryId === 0) {
+      payload.splice(-1, 1)
+    }
+
+    return this.call('query', payload, sender, value, dryRun)
   }
 
   setApiOptions(options: ApiOptions) {
@@ -56,10 +65,6 @@ export default class Api {
     return new Promise<CallResult>((resolve) => {
       this.nebulas.api.getGasPrice().then((price) => {
         this.nebulas.api.getAccountState(sender.getAddress()).then((state) => {
-          if (payload[1] === 0) {
-            (payload as number[]).splice(-1, 1)
-          }
-
           const contract = {
             function: functionName,
             args: JSON.stringify(payload)

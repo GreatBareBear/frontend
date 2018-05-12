@@ -9,11 +9,12 @@ import GalleryPage from './ui/GalleryPage'
 import TopBar from './ui/TopBar'
 import { WithStyles, withStyles } from './ui/withStyles'
 import { Image } from './models/Image'
-import { categories, getCategoryId } from './models/categories'
+import { categories, isValidCategory } from './models/categories'
 import { withApi } from './api/withApi'
 import Api from './api/Api'
 import BigNumber from 'bignumber.js'
 import Account from './nebulify/src/Account'
+import { observer } from 'mobx-react'
 
 const styles = (theme: Theme) => ({
   root: {
@@ -50,10 +51,6 @@ const styles = (theme: Theme) => ({
   } as CSSProperties
 })
 
-const isValidCategory = (categoryQueryName: string) => {
-  return categories.includes(categoryQueryName)
-}
-
 const theme = createMuiTheme({
   palette: {
     primary: indigo,
@@ -68,7 +65,9 @@ type AppProps = WithStyles & RouteComponentProps<{}> & {
 @withStyles(styles)
 @withApi()
 class App extends React.Component<AppProps, {
-  images: Image[]
+  images: Image[],
+  galleryShouldBeLoading: boolean,
+  anyImages: boolean
 }> {
   category = {
     name: categories[0],
@@ -76,7 +75,9 @@ class App extends React.Component<AppProps, {
   }
 
   state = {
-    images: [] as Image[]
+    images: [] as Image[],
+    galleryShouldBeLoading: false,
+    anyImages: true
   }
 
   constructor(props: any) {
@@ -108,6 +109,10 @@ class App extends React.Component<AppProps, {
   }
 
   updateImageList = async (imageCount: number = 20, append: boolean = false) => {
+    if (this.state.galleryShouldBeLoading) {
+      return
+    }
+
     const images = append ? this.state.images : []
     const categoryName = this.category.name
     const min = 100
@@ -115,47 +120,45 @@ class App extends React.Component<AppProps, {
     const currentIndex = append ? this.state.images.length + 1 : 1
     const forLength = append ? this.state.images.length + imageCount : imageCount
 
-    const category = categoryName === 'Random' ? categories[Math.floor(Math.random() * categories.length)] : categoryName
-
     const account = Account.fromAddress('n1NmQoV2349d3jp2TJoDDZbdErGFM5X331E')
 
     account.setPrivateKey('your private key')
 
-    const result = await this.props.api.query(forLength, 'Random', account, new BigNumber(0), true)
+    this.setState({ galleryShouldBeLoading: true, anyImages: true })
 
-    for (let i = 0; i < forLength; i++) {
-      images.push((JSON.parse(result.result) as any).map((image, index): Image => {
-        return {
-          index,
-          name: image.name,
-          src: image.base64,
-          author: image.author,
-          width: image.width,
-          height: image.height
-        }
-      })[0])
+    const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0), true)
+
+    if (result.result === '') {
+      this.setState({ images: [], galleryShouldBeLoading: false, anyImages: false })
+
+      return
     }
 
-    /*for (let index = currentIndex; index <= forLength; index++) {
+    const rawImages = JSON.parse(result.result) as any
 
-      // {"result":"{"width":676,"height":437,"base64":"","name":"contributions (2).png","category":-1}","execute_err":"","estimate_gas":"20421"}
+    if (rawImages.length === this.state.images.length) {
+      return
+    }
 
-      newImages.push({
+    for (const [index, rawImage] of rawImages.entries()) {
+      images.push({
         index,
-
+        name: rawImage.name,
+        src: rawImage.base64,
+        author: rawImage.author,
+        width: rawImage.width,
+        height: rawImage.height
       })
-      /!*newImages.push({
-        index,
-        name: `${category}-${index}`,
-        src: `https://source.unsplash.com/random?${category},${index}`,
-        author: 'Nuff Lee',
-        width: Math.floor(Math.random() * (max - min + 1)) + min,
-        height: Math.floor(Math.random() * (max - min + 1)) + min
-      })*!/
-    }*/
+    }
+
+    console.log('done')
 
     this.category.updated = true
-    this.setState({ images })
+    this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
+  }
+
+  updateEndpoint = (isTestnet: boolean) => {
+    this.updateImageList()
   }
 
   render() {
@@ -165,7 +168,7 @@ class App extends React.Component<AppProps, {
       <MuiThemeProvider theme={theme}>
         <div className={classes.root}>
           <CssBaseline/>
-          <TopBar/>
+          <TopBar onEndpointChange={this.updateEndpoint}/>
           <Drawer variant='permanent' classes={{
             paper: classes.drawerPaper
           }}>
@@ -181,7 +184,7 @@ class App extends React.Component<AppProps, {
               <Route path='/category/:id' render={({ match }) => {
                 if (!isValidCategory(match.params.id)) {
                   return (
-                    <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images}/>
+                    <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
                   )
                 }
               }}/>
@@ -189,8 +192,11 @@ class App extends React.Component<AppProps, {
                 if (this.category.name !== 'Random') {
                   this.category = { name: 'Random', updated: false }
                 }
+
+                console.log('galleryShouldBeLoading', this.state.galleryShouldBeLoading)
+
                 return (
-                  <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images}/>
+                  <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
                 )
               }}/>
             </Switch>
