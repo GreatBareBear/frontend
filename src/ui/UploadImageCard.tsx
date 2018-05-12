@@ -92,16 +92,6 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
     })
   }
 
-  updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
-    const { file } = this.state
-
-    file.author = event.target.value
-
-    this.setState({
-      file
-    })
-  }
-
   shouldComponentUpdate(nextProps: UploadedImageCardProps) {
     if (nextProps.fileData !== this.props.fileData) {
       this.state.file = nextProps.fileData
@@ -119,7 +109,6 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
         <CardMedia className={classes.media} image={file.preview} title={file.name}/>
         <CardContent>
           <EditableText defaultValue={file.name} typographyVariant={'headline'} onValueApplied={(value) => this.updateName(index, value)}/>
-          <TextField id='with-placeholder' label='Image author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.file.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
           <FormControl className={this.props.classes.categoryPicker}>
             <InputLabel htmlFor='categoryPicker'>Category</InputLabel>
             <Select name={file.name} value={this.state.file.category} onChange={(event) => this.updateCategory(event)} inputProps={{

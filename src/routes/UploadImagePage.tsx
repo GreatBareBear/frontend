@@ -1,5 +1,5 @@
 import FileUpload from '@material-ui/icons/FileUpload'
-import { Button, Theme, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from 'material-ui'
+import { Button, Theme, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from 'material-ui'
 import * as React from 'react'
 import Dropzone, { ImageFile } from 'react-dropzone'
 import Masonry from 'react-masonry-component'
@@ -49,7 +49,11 @@ const styles = (theme: Theme) => ({
     verticalAlign: 'middle',
     lineHeight: '37px',
     marginRight: theme.spacing.unit * 2
-  } as CSSProperties
+  } as CSSProperties,
+  yourImages: {
+    height: '37px',
+    lineHeight: '37px'
+  }
 })
 
 export const DEFAULT_AUTHOR = 'Mr. Anomynous'
@@ -66,14 +70,16 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   filesToRemove: UploadImage[]
   price: BigNumber,
   usdPrice: BigNumber,
-  updated: boolean
+  updated: boolean,
+  author: string
 }> {
   state = {
     files: [] as UploadImage[],
     filesToRemove: [] as UploadImage[],
     price: null,
     usdPrice: null,
-    updated: false
+    updated: false,
+    author: DEFAULT_AUTHOR
   }
 
   async componentDidUpdate() {
@@ -108,9 +114,6 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   }
 
   onDrop = (acceptedFiles: ImageFile[], rejectedFiles: ImageFile[]) => {
-    /*rejectedFiles.forEach((file: an   ky) => {
-      console.log('Rejected file: ' + file.name)
-    })*/
     const files = this.state.files
     acceptedFiles.forEach((element: ImageFile) => {
       files.push({
@@ -156,14 +159,25 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     }
   }
 
+  updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
+    let { author } = this.state
+
+    author = event.target.value
+
+    this.setState({
+      author
+    })
+  } 
+
   renderMasonry() {
     const { classes } = this.props
 
     return (
       <React.Fragment>
-        <br/>
-        <br/>
-        <Typography variant='subheading'>
+        {this.state.files.length > 0 &&
+          <TextField label='Images author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal' />
+        }
+        <Typography variant='subheading' className={classes.yourImages}>
           Your images ({this.state.files.length}):
           <Button variant='raised' className={classes.uploadButton} color='primary' onClick={this.upload}>
             {this.state.files.length > 1 ? 'Upload all' : 'Upload'}
@@ -202,8 +216,6 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         </Dropzone>
         <br/>
         {this.renderMasonry()}
-        {/*
-        {this.state.files.length > 0 && this.renderMasonry()}*/}
         <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)}/>
       </div>
     )
