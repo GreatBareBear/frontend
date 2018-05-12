@@ -22,7 +22,6 @@
     "mobx": "^4.2.0",
     "mobx-react": "^5.0.0",
     "nebulas": "^0.4.8",
-    "nebulify": "^0.4.8",
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "react-dropzone": "^4.2.9",
