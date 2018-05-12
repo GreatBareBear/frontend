@@ -13,7 +13,7 @@ import FileDeleteDialog from '../ui/FileDeleteDialog'
 import { withApi } from '../api/withApi'
 import Api from '../api/Api'
 import BigNumber from 'bignumber.js'
-import Account from '../nebulify/src/Account'
+import Account from '../nebulify/Account'
 import { calculateImagePrice, getImageData } from '../models/Image'
 
 const styles = (theme: Theme) => ({

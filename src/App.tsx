@@ -14,7 +14,7 @@ import { Image } from './models/Image'
 import { categories, isValidCategory } from './models/categories'
 import { withApi } from './api/withApi'
 import Api from './api/Api'
-import Account from './nebulify/src/Account'
+import Account from './nebulify/Account'
 import * as LZString from 'lz-string'
 
 const styles = (theme: Theme) => ({

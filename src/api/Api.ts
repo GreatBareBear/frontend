@@ -1,8 +1,8 @@
 import BigNumber from 'bignumber.js'
 import { getCategoryId } from '../models/categories'
-import Nebulas from '../nebulify/src/Nebulas'
-import Account from '../nebulify/src/Account'
-import Transaction from '../nebulify/src/Transaction'
+import Nebulas from '../nebulify/Nebulas'
+import Account from '../nebulify/Account'
+import Transaction from '../nebulify/Transaction'
 import * as _ from 'lodash'
 
 const contractAddress = 'n22MpZjRfwz8tbL7cecrNFAGQ1jDedTJQjz'
