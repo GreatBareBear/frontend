@@ -48,9 +48,6 @@ const endpointSelectTheme = createMuiTheme({
     },
     MuiInput: {
       underline: {
-        '&:before': {
-          backgroundColor: 'rgb(255, 255, 255)'
-        },
         '&:hover&:before': {
           backgroundColor: 'rgba(255, 255, 255, 0.87)'
         }
@@ -88,8 +85,8 @@ class TopBar extends React.Component<TopBarProps> {
               <a className={classes.title} onClick={() => this.props.history.push('/')}>ImageCube</a>
             </Typography>
             <MuiThemeProvider theme={endpointSelectTheme}>
-              <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' onChange={this.updateEndpoint}>
-                <MenuItem value='Mainnet'>Mainnet</MenuItem>
+              <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' disableUnderline={true} onChange={this.updateEndpoint}>
+              <MenuItem value='Mainnet'>Mainnet</MenuItem>
                 <MenuItem value='Testnet'>Testnet</MenuItem>
               </Select>
             </MuiThemeProvider>

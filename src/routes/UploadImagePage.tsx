@@ -5,7 +5,6 @@ import Dropzone, { ImageFile } from 'react-dropzone'
 import Masonry from 'react-masonry-component'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import { observer } from 'mobx-react'
-import * as LZString from 'lz-string'
 import UploadImageCard from '../ui/UploadImageCard'
 import { WithStyles, withStyles } from '../ui/withStyles'
 import { UploadImage } from '../models/UploadImage'
@@ -15,6 +14,7 @@ import Api from '../api/Api'
 import BigNumber from 'bignumber.js'
 import Account from '../nebulify/Account'
 import { calculateImagePrice, getImageData } from '../models/Image'
+import Unit from '../nebulify/Unit'
 
 const styles = (theme: Theme) => ({
   dropZone: {
@@ -146,14 +146,13 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   upload = async () => {
     for (const image of this.state.files) {
       const imageData = await getImageData(image)
-      const compressedBase64 = LZString.compress(imageData.base64)
       const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
       account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
 
       console.log(imageData.base64)
 
-      const result = await this.props.api.upload(imageData.width, imageData.height, compressedBase64, image.name, this.state.author, image.category, account, new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toString().replace('.', '')))
+      const result = await this.props.api.upload(imageData.width, imageData.height, imageData.base64, image.name, image.author, image.category, account, Unit.toBasic(new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toFixed(18)), 'nas'))
 
       // TODO: Show error
     }

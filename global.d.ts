@@ -49,8 +49,8 @@ interface Consensus {
 }
 
 interface ContractCallResult {
-  result: string,
-  executionError: string,
+  result: any
+  executionError: string
   estimatedGas: number
 }
 
@@ -124,7 +124,9 @@ interface KeyOptions {
 }
 
 interface ApiOptions {
-  testnet: boolean
+  testnet?: boolean,
+  localNode?: boolean,
+  mainnet?: boolean
 }
 
 interface Key {

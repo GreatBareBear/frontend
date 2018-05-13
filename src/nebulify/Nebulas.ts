@@ -9,7 +9,9 @@ export default class Nebulas {
   public admin: NebulasAdmin
 
   constructor(apiOptions: ApiOptions = {
-    testnet: false
+    testnet: false,
+    localNode: false,
+    mainnet: true
   }) {
     this.underlyingInstance = new Neb.Neb()
 
@@ -24,6 +26,10 @@ export default class Nebulas {
 
     if (options.testnet) {
       apiUrl = 'https://testnet.nebulas.io'
+    }
+
+    if (options.localNode) {
+      apiUrl = 'http://localhost:8685'
     }
 
     this.underlyingInstance.setRequest(new Neb.HttpRequest(apiUrl))
