@@ -6,7 +6,7 @@ export default class Transaction {
 
   private underlyingInstance: any
 
-  constructor(public chainId: ChainId, public from: Account, public to: Account | Address, public value: Value, public nonce: number, public gasPrice: number = 0, public gasLimit: number = 0, public gasUsed?: number, contract?: Contract, public contractAddress?: Address, public data?: {}) {
+  constructor(public chainId: ChainId, public from: Account, public to: Account | Address, public value: Value, public nonce: number, public gasPrice: number = 0, public gasLimit: number = 0, contract?: Contract, public contractAddress?: Address, public data?: {}) {
     if (from == null || to == null) {
       return
     }

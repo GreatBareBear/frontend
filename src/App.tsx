@@ -15,7 +15,6 @@ import { categories, isValidCategory } from './models/categories'
 import { withApi } from './api/withApi'
 import Api from './api/Api'
 import Account from './nebulify/Account'
-import * as LZString from 'lz-string'
 
 const styles = (theme: Theme) => ({
   root: {
@@ -119,39 +118,27 @@ class App extends React.Component<AppProps, {
     const categoryName = this.category.name
     const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
-    account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
-
     this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
     const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0))
 
-    /*if (result.result === '[]') {
+    if (result.length === 0) {
       this.setState({ images: [], galleryShouldBeLoading: false, anyImages: false })
       this.category.updated = true
 
       return
-    }*/
-
-    const rawImages = /*JSON.parse(result.result) as any*/[]
-    for (let index = 1; index <= 10; index++) {
-      rawImages.push({
-        name: `${categoryName} `,
-        base64: `https://source.unsplash.com/1000x1000/?${categoryName},${index}`,
-        author: 'author',
-        width: 1000,
-        height: 1000
-      })
     }
     
 /*    if (_.isEqual(rawImages.length, this.state.images.length)) {
-      return
+      return}
     }*/
+
     const imagesLength = this.state.images.length
-    for (const [index, rawImage] of rawImages.entries()) {
+    for (const [index, rawImage] of result.entries()) {
       const imageIndex = index + imagesLength
       images.push({
         index: imageIndex,
-        name: rawImage.name + imageIndex,
+        name: rawImage.name,
         src: rawImage.base64,
         author: rawImage.author,
         width: rawImage.width,
@@ -206,8 +193,8 @@ class App extends React.Component<AppProps, {
                 
               }}/>
               <Route path='/' render={() => {
-                if (this.category.name !== 'Random') {
-                  this.category = { name: 'Random', updated: false }
+                if (this.category.name !== 'All') {
+                  this.category = { name: 'All', updated: false }
                 }
                 return (
                   <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>

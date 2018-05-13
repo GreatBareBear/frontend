@@ -1,3 +1,13 @@
+export function chunkString(text: string, chunkSize: number): string[] {
+  const result = []
+
+  for (let index = 0; index < text.length; index += chunkSize) {
+    result.push(text.slice(index, index + chunkSize))
+  }
+
+  return result
+}
+
 export function removeUndefined(object: {}) {
   const result = {}
 

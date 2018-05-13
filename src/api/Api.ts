@@ -3,9 +3,14 @@ import { getCategoryId } from '../models/categories'
 import Nebulas from '../nebulify/Nebulas'
 import Account from '../nebulify/Account'
 import Transaction from '../nebulify/Transaction'
-import * as _ from 'lodash'
+import { chunkString } from '../utils'
 
-const contractAddress = 'n22MpZjRfwz8tbL7cecrNFAGQ1jDedTJQjz'
+// local node: n21nefYJiv1GprKbewt9AgqXoTonot94iHs
+
+const contractAddress = 'n1pLtck9REuunWJrHsaHZHnKmFFC8gqyKbb'
+export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
+
+// 0.0.0.0:8685
 
 type CallResult = ContractCallResult & {
   transaction?: {
@@ -15,12 +20,13 @@ type CallResult = ContractCallResult & {
 }
 
 export default class Api {
-  private nebulas: Nebulas
-  private account: Account
   public isTestnet: boolean
 
+  private nebulas: Nebulas
+  private account: Account
+
   get chainId() {
-    return this.isTestnet ? 1001 : 1 // TODO: 1 might not be mainnet
+    return this.isTestnet ? 1001 : 100 // TODO: 1 might not be mainnet
   }
 
   constructor() {
@@ -32,35 +38,62 @@ export default class Api {
   }
 
   async upload(width: number, height: number, base64: string, name: string, author: string, category: string, sender: Account, value: BigNumber, dryRun: boolean = false) {
-    // [{"width": 100, "height": 100, "base64": "", "name": "a", "username": "user1", "category": 0}]
+    const chunks = chunkString(base64, 130000)
 
-    const chunks = base64.match(new RegExp(`.{1,${43000}}`, `g`))
+    const id = (parseInt((await this.getImagesUploadingCount()).result as string, 10)).toString()
 
-    /*
-        const result = await this.call('upload', [{
-          width,
-          height,
-          chunks[0],
-          name,
-          author,
-          category: getCategoryId(category) - 1
-        }, chunks.length === 1], sender, value, dryRun)
+    const result = await this.call('upload', [{
+      width,
+      height,
+      base64: chunks[0],
+      name,
+      author,
+      category: getCategoryId(category) - 1
+    }, chunks.length === 1], sender, value, false)
 
-        if (chunks.length > 1) {
-          for (const chunk of chunks) {
-            this.call('appendBase64', [])
-          }
+    const waitTimer = setInterval(async () => {
+      if ((await this.nebulas.api.getTransactionReceipt(result.transaction.txHash)).status === 1) {
+        clearInterval(waitTimer)
+
+        this.uploadChunks(chunks, sender, id)
+
+        return
+      }
+
+      if (this.run) {
+        return
+      }
+    }, 350)
+  }
+
+  run: boolean = false
+
+  async uploadChunks(chunks: string[], sender: Account, id: string) {
+    if (chunks.length > 1 && this.run === false) {
+      this.run = true
+      const startNonce = (await this.nebulas.api.getAccountState(sender.getAddress())).nonce
+
+      for (let i = 1; i < chunks.length; i++) {
+        console.log('loop start')
+
+        const chunk = chunks[i]
+        let last
+
+        if (i === chunks.length - 1) {
+          last = true
         }
 
-        return result*/
+        await this.call('appendBase64', [id, chunk, last], sender, new BigNumber(0), false, startNonce + i)
+      }
+    }
   }
 
   async getImageCount() {
-    // return this.call('getImageCount', [], )
+    return this.call('getImageCount', [], imgCubeAccount, new BigNumber(0), true)
   }
 
   async getImagesUploadingCount() {
-
+    return this.call('getImagesUploadingCount', [], imgCubeAccount, new BigNumber(0), true)
   }
 
   async query(count: number, offset: number, category: string, sender: Account, value: BigNumber) {
@@ -74,49 +107,58 @@ export default class Api {
       payload[2]--
     }
 
-    console.log(payload[2])
+    const result = JSON.parse((await this.call('query', payload, imgCubeAccount, value, true)).result.result)
 
-    return this.call('query', payload, sender, value, true)
+    for (const image of result) {
+      console.log(image)
+    }
+
+    return null
   }
 
-  async call(functionName: string, payload: {}, sender: Account, value: BigNumber, dryRun: boolean): Promise<CallResult> {
+  // 29013b136d0dcf37faf148ebe6c9d6d651d27daf4baf90b3dde03053ecc14231
+  // cec19e40ca9204688243b4e45b3382eb5411adc857276561fbe38eb332d70a27
+
+  async call(functionName: string, payload: {}, sender: Account, value: BigNumber, dryRun: boolean = false, nonce: number = null): Promise<CallResult> {
     return new Promise<CallResult>((resolve) => {
-      this.nebulas.api.getGasPrice().then((price) => {
-        this.nebulas.api.getAccountState(sender.getAddress()).then((state) => {
-          const contract = {
-            function: functionName,
-            args: JSON.stringify(payload)
-          }
+      this.nebulas.api.getGasPrice().then(async (price) => {
+        if (nonce == null) {
+          nonce = (await this.nebulas.api.getAccountState(sender.getAddress())).nonce + 1
+        }
 
-          console.log(JSON.stringify(contract))
+        console.log('nonce', nonce)
 
-          this.nebulas.api.call({
-            from: sender.getAddress(),
-            to: contractAddress,
-            value: value.toString(),
-            nonce: state.nonce,
-            contract,
-            gasPrice: price,
-            gasLimit: 1000000
-          }).then((result) => {
-            if (dryRun === false) {
-              const transaction: Transaction = new Transaction(this.chainId, sender, contractAddress, value.toString(), state.nonce + 1, price, 1000000, 0, contract)
+        const contract = {
+          function: functionName,
+          args: JSON.stringify(payload)
+        }
 
-              transaction.sign()
+        this.nebulas.api.call({
+          from: sender.getAddress(),
+          to: contractAddress,
+          value: value.toString(),
+          nonce,
+          contract,
+          gasPrice: price,
+          gasLimit: 1000000000
+        }).then((result) => {
+          if (dryRun === false) {
+            const transaction: Transaction = new Transaction(this.chainId, sender, contractAddress, value.toString(), nonce, 20000000, 1000000000, contract)
 
-              this.nebulas.api.sendRawTransaction(transaction).then((transactionResult) => {
-                resolve({
-                  ...result,
-                  transaction: {
-                    contractAddress: transactionResult.contractAddress,
-                    txHash: transactionResult.txHash
-                  }
-                })
+            transaction.sign()
+
+            this.nebulas.api.sendRawTransaction(transaction).then((transactionResult) => {
+              resolve({
+                ...result,
+                transaction: {
+                  contractAddress: transactionResult.contractAddress,
+                  txHash: transactionResult.txHash
+                }
               })
-            } else {
-              resolve(result)
-            }
-          })
+            })
+          } else {
+            resolve(result)
+          }
         })
       })
     })

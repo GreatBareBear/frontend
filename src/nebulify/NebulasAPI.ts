@@ -1,5 +1,5 @@
 import Transaction from './Transaction'
-import { removeUndefined } from './utils'
+import { removeUndefined } from '../utils'
 
 export default class NebulasAPI {
   private underlyingInstance: any
