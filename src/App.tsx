@@ -137,13 +137,12 @@ class App extends React.Component<AppProps, {
     for (let index = 1; index <= 10; index++) {
       rawImages.push({
         name: 'Random',
-        base64: `https://images.unsplash.com/reserve/oMRKkMc4RSq7N91OZl0O_IMG_8309.jpg?ixlib=rb-0.3.5&q=80&fm=jpg&crop=entropy&cs=tinysrgb&w=1080&fit=max&ixid=eyJhcHBfaWQiOjF9&s=0228262d6df3a01cbd598604aadb1940`,
+        base64: `https://source.unsplash.com/1000x1000/?${index}`,
         author: 'author',
         width: 1000,
         height: 1000
       })
     }
-    console.log('LENGTH',rawImages.length)
     
 /*    if (_.isEqual(rawImages.length, this.state.images.length)) {
       return
@@ -202,7 +201,6 @@ class App extends React.Component<AppProps, {
                 if (this.category.name !== 'Random') {
                   this.category = { name: 'Random', updated: false }
                 }
-
                 return (
                   <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
                 )

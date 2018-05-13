@@ -153,7 +153,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
       console.log(imageData.base64)
 
-      const result = await this.props.api.upload(imageData.width, imageData.height, compressedBase64, image.name, image.author, image.category, account, new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toString().replace('.', '')))
+      const result = await this.props.api.upload(imageData.width, imageData.height, compressedBase64, image.name, this.state.author, image.category, account, new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toString().replace('.', '')))
 
       // TODO: Show error
     }

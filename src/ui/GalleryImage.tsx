@@ -45,7 +45,7 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
 
     return (
       <div key={this.props.imageReference.index} className='GalleryImage'>
-        <img onLoad={() => this.showImage()} src={this.props.imageReference.src} alt={this.props.imageReference.name} title={this.props.imageReference.name}/>
+        <img onLoad={() => this.showImage()} onError={() => this.showImage()} src={this.props.imageReference.src} alt={this.props.imageReference.name} title={this.props.imageReference.name}/>
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>
           <GridListTileBar title={this.props.imageReference.name} subtitle={<span>By: {this.props.imageReference.author}</span>} actionIcon={

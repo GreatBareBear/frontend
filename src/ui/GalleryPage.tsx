@@ -74,7 +74,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   }
 
   get isGalleryLoaded() {
-    return (this.loadedImagesCount === this.props.images.length) || this.props.anyImages === false
+    return (this.loadedImagesCount === this.props.images.length) && this.props.images.length > 0
   }
 
   get isGalleryScrollable() {
@@ -107,9 +107,9 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   // Deprecated by MobX API, shouldComponentUpdate function should only be handled by MobX's observer.
   // Fixes the gallery scrolling issue where scrolling wouldn't update the component (and that is required).
   shouldComponentUpdate(nextProps: GalleryPageProps) {
-    if (nextProps.shouldBeLoading !== this.props.shouldBeLoading) {
+    /*if (nextProps.shouldBeLoading !== this.props.shouldBeLoading) {
       this.loadedImagesCount = 0
-    }
+    }*/
 
     return nextProps.images !== this.props.images || !this.isGalleryLoaded || nextProps.shouldBeLoading !== this.props.shouldBeLoading
   }
@@ -123,7 +123,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
       )
     })
 
-    if (childElements.length === 0 && this.isGalleryLoaded) {
+    if (childElements.length === 0 && this.isGalleryLoaded && !this.props.shouldBeLoading) {
       return (
         <Typography className={classes.noImagesText}>No images have been uploaded in this category yet. Why don't you upload one&nbsp; <Link to='/upload'>here</Link>?</Typography>
       )
@@ -136,9 +136,9 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
             {childElements}
           </Masonry>}
         
-        {((this.isGalleryLoaded === false && this.props.shouldBeLoading) || this.isGalleryScrollable) && 
+        {(this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && 
           <div className='GalleryLoadingMore'>
-            <CircularProgress color='primary' />
+          {this.isGalleryScrollable ? <CircularProgress color='primary' /> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress} /> : <LinearProgress variant='indeterminate' className={classes.linearProgress} />}
           </div>}
       </React.Fragment>
     )

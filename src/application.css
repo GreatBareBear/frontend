@@ -12,11 +12,11 @@
   bottom: 5px;
 }
 
-.Gallery {
+.GalleryPage {
   display: none
 }
 
-.Gallery.GalleryLoaded {
+.GalleryPage.GalleryLoaded {
   display: block
 }
 
