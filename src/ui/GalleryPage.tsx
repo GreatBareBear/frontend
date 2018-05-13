@@ -1,4 +1,4 @@
-import { CircularProgress, LinearProgress, Typography } from 'material-ui'
+import { CircularProgress, LinearProgress, Typography, Modal, Theme } from 'material-ui'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
@@ -7,8 +7,9 @@ import GalleryImage from './GalleryImage'
 import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
 import { Link } from 'react-router-dom'
+import { CSSProperties } from 'material-ui/styles/withStyles'
 
-const styles = {
+const styles = (theme: Theme) => ({
   linearProgress: {
     width: '50%',
     height: '8px',
@@ -20,8 +21,17 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     fontSize: '17px'
-  }
-}
+  },
+  imageLightBox: {
+    position: 'absolute',
+    outline: 0,
+    padding: theme.spacing.unit * 4,
+    left: '50%',
+    top: '50%',
+    transform: 'translate(-50%, -50%)',
+    color: 'white'
+  } as CSSProperties
+})
 
 type GalleryPageProps = WithStyles & {
   images: Image[],
@@ -32,6 +42,12 @@ type GalleryPageProps = WithStyles & {
   anyImages: boolean
 }
 
+type LightBoxObject = {
+  reference: any,
+  image: Image,
+  isShown: boolean
+}
+
 @withStyles(styles)
 @observer
 export default class GalleryPage extends React.Component<GalleryPageProps, any> {
@@ -39,6 +55,22 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   @observable loadedImagesCount = 0
   @observable imagesLoadedPercent = 0
   galleryReference: any
+  @observable lightBox: LightBoxObject = {
+    image: undefined,
+    reference: undefined,
+    isShown: false
+  } as LightBoxObject
+
+  showLightbox(image: Image) {
+    this.hideLightbox()
+    this.lightBox.image = image
+    this.lightBox.isShown = true
+  }
+
+  hideLightbox() {
+    this.lightBox.image = undefined
+    this.lightBox.isShown = false
+  }
 
   constructor(props: GalleryPageProps) {
     super(props)
@@ -54,6 +86,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
   handleScroll = () => {
     if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1000 && !this.infiniteScrollCooldownActive && this.isGalleryReady && this.isGalleryLoaded) {
+      console.log('PUSH MORE')
       this.props.pushMoreCallback(10, true)
       this.infiniteScrollCooldownActive = true
       setTimeout(() => {
@@ -96,8 +129,6 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   componentWillReceiveProps(nextProps: GalleryPageProps) {
     if (nextProps.currentCategory !== this.props.currentCategory) {
       this.loadedImagesCount = 0
-      this.props.pushMoreCallback()
-
       return true
     } else {
       return nextProps.images !== this.props.images || !this.isGalleryLoaded
@@ -119,7 +150,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
     const childElements = images.map((image: Image) => {
       return (
-        <GalleryImage key={image.index} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
+        <GalleryImage key={image.index} onCardClicked={() => this.showLightbox(image)} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
       )
     })
 
@@ -140,6 +171,22 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
           <div className='GalleryLoadingMore'>
           {this.isGalleryScrollable ? <CircularProgress color='primary' /> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress} /> : <LinearProgress variant='indeterminate' className={classes.linearProgress} />}
           </div>}
+        {this.lightBox.isShown &&
+          <Modal
+            open={this.lightBox.isShown}
+            onClose={() => this.hideLightbox()}
+          >
+            <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
+              <Typography variant='title' style={{ color: 'white' }}>
+                {this.lightBox.image.name}
+              </Typography>
+              <img src={this.lightBox.image.src} style={{ maxWidth: '700px' }} />
+              <Typography variant='subheading' style={{ color: 'white' }}>
+              Created by: {this.lightBox.image.author}
+              </Typography>
+            </div>
+          </Modal>
+        }
       </React.Fragment>
     )
   }

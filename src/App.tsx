@@ -110,19 +110,18 @@ class App extends React.Component<AppProps, {
   }
 
   updateImageList = async (imageCount: number = 20, append: boolean = false) => {
-
+    
     if (this.state.galleryShouldBeLoading) {
       return
     }
-
+    
     const images = append ? this.state.images : []
     const categoryName = this.category.name
-
     const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
     account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
 
-    this.setState({ galleryShouldBeLoading: true, anyImages: true })
+    this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
     const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0))
 
@@ -136,8 +135,8 @@ class App extends React.Component<AppProps, {
     const rawImages = /*JSON.parse(result.result) as any*/[]
     for (let index = 1; index <= 10; index++) {
       rawImages.push({
-        name: 'Random',
-        base64: `https://source.unsplash.com/1000x1000/?${index}`,
+        name: `${categoryName} `,
+        base64: `https://source.unsplash.com/1000x1000/?${categoryName},${index}`,
         author: 'author',
         width: 1000,
         height: 1000
@@ -159,7 +158,6 @@ class App extends React.Component<AppProps, {
         height: rawImage.height
       })
     }
-
     this.category.updated = true
     this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
   }
@@ -189,13 +187,23 @@ class App extends React.Component<AppProps, {
             <Switch>
               <Route exact path='/upload' component={UploadImagePage}/>
               <Route path='/category/:id' render={({ match }) => {
-                if (isValidCategory(match.params.id) && this.category.name !== match.params.id) {
+                if (this.category.name !== match.params.id) {
+                  console.log('Category changed from',this.category.name,'to',match.params.id)
                   this.category.name = match.params.id
-                  this.category.updated = false
+                  this.category.updated = false                 
+                }
+                if (isValidCategory(match.params.id)) {
                   return (
-                    <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
+                    <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages} />
+                  )
+                } else {
+                  return (
+                    <div>
+                      Category {match.params.id} does not exist.
+                    </div>
                   )
                 }
+                
               }}/>
               <Route path='/' render={() => {
                 if (this.category.name !== 'Random') {

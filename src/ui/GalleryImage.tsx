@@ -22,7 +22,8 @@ interface GalleryImageReferences {
 type GalleryImageProps = WithStyles & {
   imageReference: Image,
   onLoad?: () => void,
-  onError?: () => void
+  onError?: () => void,
+  onCardClicked: () => void
 }
 
 @withStyles(styles)
@@ -49,7 +50,7 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>
           <GridListTileBar title={this.props.imageReference.name} subtitle={<span>By: {this.props.imageReference.author}</span>} actionIcon={
-            <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }}> <InfoIcon/> </IconButton>
+            <IconButton onClick={() => {console.log('KLIKED'); this.props.onCardClicked()}} style={{ color: 'rgba(255, 255, 255, 0.54)' }}> <InfoIcon/> </IconButton>
           }/>
         </div>
       </div>
