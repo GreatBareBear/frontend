@@ -29,6 +29,7 @@ const styles = (theme: Theme) => ({
     left: '50%',
     top: '50%',
     transform: 'translate(-50%, -50%)',
+    backgroundColor: 'white',
     color: 'white'
   } as CSSProperties
 })
@@ -177,12 +178,16 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
             onClose={() => this.hideLightbox()}
           >
             <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
-              <Typography variant='title' style={{ color: 'white' }}>
+              <Typography variant='headline' style={{
+                marginBottom: '15px'
+              }}>
                 {this.lightBox.image.name}
               </Typography>
               <img src={this.lightBox.image.src} style={{ maxWidth: '700px' }} />
-              <Typography variant='subheading' style={{ color: 'white' }}>
-              Created by: {this.lightBox.image.author}
+              <Typography variant='subheading' style={{
+                marginTop: '15px'
+              }}>
+                Created by: {this.lightBox.image.author}
               </Typography>
             </div>
           </Modal>

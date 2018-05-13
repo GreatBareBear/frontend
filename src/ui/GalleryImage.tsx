@@ -1,8 +1,9 @@
 import InfoIcon from '@material-ui/icons/Info'
-import { GridListTileBar, IconButton } from 'material-ui'
+import { GridListTileBar, IconButton, Tooltip } from 'material-ui'
 import * as React from 'react'
 import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
+import { CloudDownload } from '@material-ui/icons'
 
 const styles = () => ({
   galleryImagePlaceholder: {
@@ -41,6 +42,19 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
     this.props.onLoad()
   }
 
+  onDownloadClicked = () => {
+    const element = document.createElement('a')
+    element.setAttribute('href', this.props.imageReference.src)
+    element.setAttribute('download', this.props.imageReference.name + '.' + this.props.imageReference.src.split(';')[0].split('/')[1])
+
+    element.style.display = 'none'
+    document.body.appendChild(element)
+
+    element.click()
+
+    document.body.removeChild(element)
+  }
+
   render() {
     const { classes } = this.props
 
@@ -50,7 +64,18 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>
           <GridListTileBar title={this.props.imageReference.name} subtitle={<span>By: {this.props.imageReference.author}</span>} actionIcon={
-            <IconButton onClick={() => {console.log('KLIKED'); this.props.onCardClicked()}} style={{ color: 'rgba(255, 255, 255, 0.54)' }}> <InfoIcon/> </IconButton>
+            <React.Fragment>
+              <IconButton onClick={this.onDownloadClicked} style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
+                <Tooltip title='Download'>
+                  <CloudDownload/>
+                </Tooltip>
+              </IconButton>
+              <IconButton onClick={this.props.onCardClicked} style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
+                <Tooltip title='More info'>
+                  <InfoIcon/>
+                </Tooltip>
+              </IconButton>
+            </React.Fragment>
           }/>
         </div>
       </div>
