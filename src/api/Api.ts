@@ -29,11 +29,10 @@ export default class Api {
   }
 
   constructor() {
-    /*this.nebulas = new Nebulas()
+    this.nebulas = new Nebulas()
 
-    this.setApi({
-      testnet: true
-    })*/
+    // TODO: Change this to mainnet in prod
+    this.setApi(true)
 
     this.nebPay = new NebulasPay()
   }
@@ -68,14 +67,14 @@ export default class Api {
       payload.splice(-1, 1)
     } else {
       payload[2]--
-    } 
+    }
 
-    const raw = (await this.call('query', payload, value, true)).result
+    const raw = (await this.nebulasCall('query', payload, value)).result
 
     return JSON.parse(raw === '' ? '[]' : raw)
   }
 
-  async call(functionName: string, payload: {}, value: BigNumber, dryRun: boolean = false, nonce: number = null): Promise<CallResult> {
+  async call(functionName: string, payload: {}, value: BigNumber, dryRun: boolean = false): Promise<CallResult> {
     return new Promise<CallResult>((resolve) => {
       const args = JSON.stringify(payload)
       const callbackUrl = this.isTestnet ? NebulasPay.config.testnetUrl : NebulasPay.config.mainnetUrl
@@ -98,7 +97,33 @@ export default class Api {
     })
   }
 
+  async nebulasCall(functionName: string, payload: {}, value: BigNumber = new BigNumber(0)): Promise<CallResult> {
+    return new Promise<CallResult>(async (resolve) => {
+      const nonce = (await this.nebulas.api.getAccountState(imgCubeAccount.getAddress())).nonce + 1
+
+      const contract = {
+        function: functionName,
+        args: JSON.stringify(payload)
+      }
+
+      this.nebulas.api.call({
+        from: imgCubeAccount.getAddress(),
+        to: contractAddress,
+        value: value.toString(),
+        nonce,
+        gasPrice: 1000000,
+        gasLimit: 200000,
+        contract
+      }).then((resolve))
+    })
+  }
+
   setApi(testnet: boolean) {
     this.isTestnet = testnet
+
+    this.nebulas.setApi({
+      mainnet: !testnet,
+      testnet
+    })
   }
 }

@@ -83,7 +83,7 @@ class TopBar extends React.Component<TopBarProps> {
         <AppBar position='absolute' className={classes.appBar}>
           <Toolbar>
             <Typography variant='title' color='inherit' className={classNames(classes.flex)}>
-              <a className={classes.title} onClick={() => this.props.history.push('/')}>ImageCube</a>
+              <a className={classes.title} onClick={() => this.props.history.push('/')}>imgCube</a>
             </Typography>
             <MuiThemeProvider theme={endpointSelectTheme}>
               <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' disableUnderline={true} onChange={this.updateEndpoint}>

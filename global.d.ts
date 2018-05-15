@@ -97,8 +97,8 @@ interface TransactionOptions {
   to: Address
   value: Value
   nonce: number
-  gasPrice?: number
-  gasLimit?: number
+  gasPrice: number
+  gasLimit: number
   contract?: Contract
   binary?: string
 }
