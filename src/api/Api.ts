@@ -103,9 +103,11 @@ export default class Api {
 
     if (categoryId === 0) {
       payload.splice(-1, 1)
-    }
+    } else {
+      payload[2]--
+    } 
 
-    const raw = (await this.call('query', payload, imgCubeAccount, value, true)).result
+    const raw = (await this.call('query', payload, imgCubeAccount, value, true)).result 
 
     const result = JSON.parse(raw === '' ? '[]' : raw)
 

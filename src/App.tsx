@@ -108,7 +108,7 @@ class App extends React.Component<AppProps, {
     return categoryButtonList
   }
 
-  updateImageList = async (imageCount: number = 20, append: boolean = false) => {
+  updateImageList = async (imageCount: number = 40, append: boolean = false) => {
     
     if (this.state.galleryShouldBeLoading) {
       return
@@ -121,18 +121,14 @@ class App extends React.Component<AppProps, {
     this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
     const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0))
-
+    
     if (result.length === 0) {
-      this.setState({ images: [], galleryShouldBeLoading: false, anyImages: false })
+      this.setState({ images, galleryShouldBeLoading: false, anyImages: false })
       this.category.updated = true
 
       return
     }
     
-/*    if (_.isEqual(rawImages.length, this.state.images.length)) {
-      return}
-    }*/
-
     const imagesLength = this.state.images.length
     for (const [index, rawImage] of result.entries()) {
       const imageIndex = index + imagesLength

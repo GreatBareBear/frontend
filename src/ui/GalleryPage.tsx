@@ -8,6 +8,7 @@ import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
 import { Link } from 'react-router-dom'
 import { CSSProperties } from 'material-ui/styles/withStyles'
+import _ = require('lodash')
 
 const styles = (theme: Theme) => ({
   linearProgress: {
@@ -77,17 +78,22 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
     super(props)
   }
 
+  handleResize = _.debounce(() => {
+    this.forceUpdate()
+  }, 250)
+
   componentDidMount() {
     window.addEventListener('scroll', this.handleScroll)
+    window.addEventListener('resize', this.handleResize)
   }
 
   componentWillUnmount() {
     window.removeEventListener('scroll', this.handleScroll)
+    window.removeEventListener('resize', this.handleResize)
   }
 
   handleScroll = () => {
     if (document.documentElement.scrollHeight - document.documentElement.scrollTop < 1000 && !this.infiniteScrollCooldownActive && this.isGalleryReady && this.isGalleryLoaded) {
-      console.log('PUSH MORE')
       this.props.pushMoreCallback(10, true)
       this.infiniteScrollCooldownActive = true
       setTimeout(() => {
@@ -96,12 +102,24 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
     }
   }
 
+  forcePushCooldownActive = false
+
   updateImage = () => {
     this.loadedImagesCount++
     this.imagesLoadedPercent = this.loadedImagesCount / this.props.images.length * 100
 
-    if (this.isGalleryReady) {
+    if (this.isGalleryLoaded) {
       this.imagesLoadedPercent = 0
+      // Checks if we can scroll or not.
+      // If we can, and we still don't know is there any more images to load, load more images.
+      if (this.isGalleryScrollable && this.props.anyImages) {
+        if (!this.forcePushCooldownActive) {
+          console.log('handleScroll will be called.')
+          setTimeout(() => this.props.pushMoreCallback(10, true), this.props.infiniteScrollCooldownLength)
+          this.forcePushCooldownActive = true
+          setTimeout(() => this.forcePushCooldownActive = false, this.props.infiniteScrollCooldownLength / 2)
+        }
+      }
     }
 
     this.galleryReference.className = this.generateGalleryClassName()
@@ -113,10 +131,10 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
   get isGalleryScrollable() {
     if (this.isGalleryLoaded) {
-      return this.props.images.length >= 10
+      return document.documentElement.clientHeight < document.documentElement.scrollHeight
     }
 
-    return this.props.images.length > 10
+    return this.props.images.length > 50
   }
 
   generateGalleryClassName() {
@@ -128,8 +146,9 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   }
 
   componentWillReceiveProps(nextProps: GalleryPageProps) {
-    if (nextProps.currentCategory !== this.props.currentCategory) {
+    if (nextProps.currentCategory !== this.props.currentCategory || nextProps.images.length === 0) {
       this.loadedImagesCount = 0
+
       return true
     } else {
       return nextProps.images !== this.props.images || !this.isGalleryLoaded
@@ -139,10 +158,6 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   // Deprecated by MobX API, shouldComponentUpdate function should only be handled by MobX's observer.
   // Fixes the gallery scrolling issue where scrolling wouldn't update the component (and that is required).
   shouldComponentUpdate(nextProps: GalleryPageProps) {
-    /*if (nextProps.shouldBeLoading !== this.props.shouldBeLoading) {
-      this.loadedImagesCount = 0
-    }*/
-
     return nextProps.images !== this.props.images || !this.isGalleryLoaded || nextProps.shouldBeLoading !== this.props.shouldBeLoading
   }
 
@@ -155,7 +170,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
       )
     })
 
-    if (childElements.length === 0 && this.isGalleryLoaded && !this.props.shouldBeLoading) {
+    if (childElements.length === 0 && (this.loadedImagesCount === this.props.images.length) && !this.props.shouldBeLoading) {
       return (
         <Typography className={classes.noImagesText}>No images have been uploaded in this category yet. Why don't you upload one&nbsp; <Link to='/upload'>here</Link>?</Typography>
       )
@@ -168,7 +183,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
             {childElements}
           </Masonry>}
         
-        {(this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && 
+        {((this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && this.props.anyImages) && 
           <div className='GalleryLoadingMore'>
           {this.isGalleryScrollable ? <CircularProgress color='primary' /> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress} /> : <LinearProgress variant='indeterminate' className={classes.linearProgress} />}
           </div>}
