@@ -75,7 +75,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
 
         this.setState({
           price: nasPrice,
-          usdPrice: new BigNumber(new BigNumber(ticker.data.quotes.USD.price).multipliedBy(nasPrice) .toString().substring(6, 0))
+          usdPrice: new BigNumber(new BigNumber(ticker.data.quotes.USD.price).multipliedBy(nasPrice).toString().substring(6, 0))
         })
       })
     })
@@ -145,7 +145,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
           <Button size='small' color='primary'>
             Upload
           </Button>
-          {this.state.price && this.state.usdPrice && <Typography className={classes.priceText}>{this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
+          {this.state.price && this.state.usdPrice && <Typography className={classes.priceText}>{this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
         </CardActions>
       </Card>
     )

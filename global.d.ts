@@ -1,3 +1,34 @@
+interface NebPay {
+  pay(to: Address, value: string, options: NebPayOptions)
+  nrc20Pay(currency: string, to: Address, value: string, options?: NebPayOptions)
+  deploy(code: string, language: string, args: string, options?: NebPayOptions)
+  call(to: Address, value: string, functionName: string, args: string, options?: NebPayOptions)
+  simulateCall(to: Address, value: string, functionName: string, args: string, options?: NebPayOptions)
+}
+
+interface NebPayOptions {
+  goods?: {
+    name: string,
+    desc?: string,
+    orderId?: string,
+    ext?: string
+  }
+  qrcode?: {
+    showQrCode: boolean,
+    container?
+  }
+  callback?: string
+  listener?: (response: ContractCallResult) => void
+  nrc20?: Nrc20Currency
+}
+
+interface Nrc20Currency {
+  address: Address
+  name: string
+  symbol: string
+  decimals: number
+}
+
 interface Block {
   hash: Hash
   parentHash: Hash

@@ -81,7 +81,8 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   usdPrice: BigNumber,
   updated: boolean,
   author: string,
-  errorMessages: string[],
+  showUploadDialog: boolean
+  errorMessages: string[]
   selectedFiles: UploadImage[]
 }> {
   state = {
@@ -92,7 +93,12 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     usdPrice: null,
     updated: false,
     author: DEFAULT_AUTHOR,
+    showUploadDialog: false,
     errorMessages: [] as string[]
+  }
+
+  constructor(props: UploadImagePageProps) {
+    super(props)
   }
 
   async componentDidUpdate() {
@@ -134,7 +140,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         preview: element.preview,
         category: '',
         type: element.type,
-        author: DEFAULT_AUTHOR,
+        author: this.state.author,
         file: element
       })
     })
@@ -175,45 +181,56 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   upload = async () => {
     const author = this.state.author
     let { errorMessages, files } = this.state
+    let price = new BigNumber(0)
+
     errorMessages = []
+
     if (author.length > 100) {
       errorMessages.push('Author name ' + author.substring(0, 100) + '... exceeds the limit of 100 characters.')
       this.setState({ errorMessages })
+
       return
     }
+
     for (const image of this.state.files) {
       let error = false
       const imageData = await getImageData(image)
-      const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
-      account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
+      image.width = imageData.width
+      image.height = imageData.height
+
       if (image.name.length > 100) {
         errorMessages.push('Image name ' + image.name.substring(0, 100) + '... exceeds the limit of 100 characters.')
         error = true
       }
+
       if (imageData.base64.length > 4000000) {
         errorMessages.push('Image ' + image.name.substring(0, 100) + '... is too large to be transfered.')
         error = true
       }
 
+      price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
       if (!error) {
-     //   const result = await this.props.api.upload(imageData.width, imageData.height, imageData.base64, image.name, image.author, image.category, account, Unit.toBasic(new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toFixed(18)), 'nas'))
         files = files.filter((value: UploadImage) => image.name !== value.name)
       }
     }
 
-    this.setState({ files, errorMessages })
+    const result = await this.props.api.upload(this.state.files, price)
   }
 
   updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
-    let { author } = this.state
+    const { files } = this.state
+    const author = event.target.value
 
-    author = event.target.value
+    for (const file of files) {
+      file.author = author
+    }
 
     this.setState({
+      files,
       author
     })
-  } 
+  }
 
   renderMasonry() {
     const { classes } = this.props
@@ -221,17 +238,17 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     return (
       <React.Fragment>
         {this.state.files.length > 0 &&
-          <TextField label='Images author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal' />
+        <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
         }
         <Typography variant='subheading' className={classes.yourImages}>
           Your images ({this.state.files.length}):
-          <Button variant='raised' className={classes.uploadButton} color='primary' onClick={this.upload}>
+          <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.setState({ showUploadDialog: true })}>
             {this.state.files.length > 1 ? 'Upload all' : 'Upload'}
           </Button>
           <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.files)}>
             {this.state.files.length > 1 ? 'Delete all' : 'Delete'}
           </Button>
-          {this.state.price && this.state.usdPrice && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
+          {this.state.price && this.state.usdPrice && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
         </Typography>
         <Masonry elementType={'div'}>
           {this.state.files.map((file: UploadImage, index: number) => {
@@ -275,7 +292,6 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
             </Typography>
           </div>
         </Dropzone>
-        <br />
         {this.state.errorMessages.map((errorMessage: string, index: number) => {
           return (
             <Typography variant='body1' component='p' className={classes.errorText}>
@@ -283,6 +299,29 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
             </Typography>
           )
         })}
+
+        <Dialog open={this.state.showUploadDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
+          {
+            this.state.showUploadDialog &&
+            <React.Fragment>
+              <DialogTitle>Upload image(s)</DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  Are you sure you want to upload {this.state.files.length} images for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => this.setState({ showUploadDialog: false })} color='secondary' autoFocus>
+                  No
+                </Button>
+                <Button onClick={() => this.upload()} color='primary'>
+                  Yes
+                </Button>
+              </DialogActions>
+            </React.Fragment>
+          }
+        </Dialog>
+        <br />
         {this.renderMasonry()}
         <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)}/>
       </div>
