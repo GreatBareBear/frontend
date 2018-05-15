@@ -1,4 +1,4 @@
-import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, TextField, Theme, Typography } from 'material-ui'
+import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, TextField, Theme, Typography, Checkbox } from 'material-ui'
 import * as React from 'react'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import { categories } from '../models/categories'
@@ -8,6 +8,7 @@ import { UploadImage } from '../models/UploadImage'
 import { DEFAULT_AUTHOR } from '../routes/UploadImagePage'
 import { calculateImagePrice, getImageData } from '../models/Image'
 import BigNumber from 'bignumber.js'
+import { green } from 'material-ui/colors'
 
 const styles = (theme: Theme) => ({
   categoryPicker: {
@@ -30,13 +31,23 @@ const styles = (theme: Theme) => ({
     marginLeft: 'auto',
     textAlign: 'end',
     paddingRight: '12px'
+  } as CSSProperties,
+  checkboxRoot: {
+    position: 'absolute',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    width: '56px',
+    borderBottomRightRadius: '100%',
+    height: '56px',
+    display: 'flex'
   } as CSSProperties
 })
 
 type UploadedImageCardProps = WithStyles & {
   fileData: UploadImage,
   index: number,
-  removeFileCallback: (index: number) => void
+  isSelected: boolean,
+  removeFileCallback: (index: number) => void,
+  selectFileCallback: (isSelected: boolean) => void
 }
 
 @withStyles(styles)
@@ -106,6 +117,13 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
     const classes = this.props.classes
     return (
       <Card className={classes.card} key={index}>
+        <div className={classes.checkboxRoot}>
+          <Checkbox
+            checked={this.props.isSelected}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => this.props.selectFileCallback(e.target.checked) }
+            color='primary'
+          />
+        </div>
         <CardMedia className={classes.media} image={file.preview} title={file.name}/>
         <CardContent>
           <EditableText defaultValue={file.name} typographyVariant={'headline'} onValueApplied={(value) => this.updateName(index, value)}/>
@@ -122,7 +140,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
         </CardContent>
         <CardActions>
           <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
-            Delete
+            Cancel
           </Button>
           <Button size='small' color='primary'>
             Upload

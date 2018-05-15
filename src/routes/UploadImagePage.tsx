@@ -1,5 +1,5 @@
 import FileUpload from '@material-ui/icons/FileUpload'
-import { Button, Theme, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField } from 'material-ui'
+import { Button, Theme, Typography, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, TextField, AppBar, Toolbar, Slide } from 'material-ui'
 import * as React from 'react'
 import Dropzone, { ImageFile } from 'react-dropzone'
 import Masonry from 'react-masonry-component'
@@ -57,6 +57,11 @@ const styles = (theme: Theme) => ({
   },
   errorText: {
     color: red[500]
+  },
+  selectedAppBar: { 
+    top: 0, 
+    left: 0,
+    zIndex: theme.zIndex.appBar * 4
   }
 })
 
@@ -76,11 +81,13 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   usdPrice: BigNumber,
   updated: boolean,
   author: string,
-  errorMessages: string[]
+  errorMessages: string[],
+  selectedFiles: UploadImage[]
 }> {
   state = {
     files: [] as UploadImage[],
     filesToRemove: [] as UploadImage[],
+    selectedFiles: [] as UploadImage[],
     price: null,
     usdPrice: null,
     updated: false,
@@ -123,7 +130,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     const files = this.state.files
     acceptedFiles.forEach((element: ImageFile) => {
       files.push({
-        name: element.name,
+        name: element.name.replace(/\.[^/.]+$/, ''),
         preview: element.preview,
         category: '',
         type: element.type,
@@ -132,6 +139,12 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
       })
     })
     this.setState({ files, updated: true })
+  }
+
+  deselectFiles(files: UploadImage[]) {
+    let { selectedFiles } = this.state
+    selectedFiles = selectedFiles.filter((value: UploadImage) => !files.includes(value))
+    this.setState({ selectedFiles })
   }
 
   removeFiles(shouldRemoveFiles: boolean, filesToRemoveArray: UploadImage[]) {
@@ -147,6 +160,16 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     let filesToRemove = this.state.filesToRemove
     filesToRemove = filesToRemove.concat(files)
     this.setState({ filesToRemove })
+  }
+
+  addToSelectedFilesList(files: UploadImage[], isSelected: boolean) {
+    let selectedFiles = this.state.selectedFiles
+    if (isSelected) {
+      selectedFiles = selectedFiles.concat(files)
+    } else {
+      selectedFiles = selectedFiles.filter((value: UploadImage) => !files.includes(value))
+    }
+    this.setState({ selectedFiles })
   }
 
   upload = async () => {
@@ -213,7 +236,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         <Masonry elementType={'div'}>
           {this.state.files.map((file: UploadImage, index: number) => {
             return (
-              <UploadImageCard fileData={file} index={index} key={index} removeFileCallback={() => this.addToRemoveFilesList([file])}/>
+              <UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])}/>
             )
           })}
         </Masonry>
@@ -226,6 +249,21 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
     return (
       <div>
+        <Slide direction='down' in={this.state.selectedFiles.length > 0}>
+          <AppBar position='fixed' className={classes.selectedAppBar} color='default'>
+            <Toolbar>
+              <Typography variant='title' color='inherit' style={{ flex: 1 }}>
+                {this.state.selectedFiles.length} selected files
+              </Typography>
+              <Button color='secondary' onClick={() => {this.addToRemoveFilesList(this.state.selectedFiles); this.deselectFiles(this.state.selectedFiles)}}>
+                Cancel selected
+              </Button>
+              <Button color='primary' onClick={() => { /* TODO: upload selected */ this.deselectFiles(this.state.selectedFiles) }}>
+                Upload selected
+              </Button>
+            </Toolbar>
+          </AppBar>
+        </Slide >
         <Typography variant='title'>
           Upload new image
         </Typography>
