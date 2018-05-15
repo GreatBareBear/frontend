@@ -15,6 +15,7 @@ import BigNumber from 'bignumber.js'
 import Account from '../nebulify/Account'
 import { calculateImagePrice, getImageData } from '../models/Image'
 import Unit from '../nebulify/Unit'
+import { red } from 'material-ui/colors'
 
 const styles = (theme: Theme) => ({
   dropZone: {
@@ -53,6 +54,9 @@ const styles = (theme: Theme) => ({
   yourImages: {
     height: '37px',
     lineHeight: '37px'
+  },
+  errorText: {
+    color: red[500]
   }
 })
 
@@ -73,6 +77,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   updated: boolean,
   author: string,
   showUploadDialog: boolean
+  errorMessages: string[]
 }> {
   state = {
     files: [] as UploadImage[],
@@ -81,7 +86,8 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     usdPrice: null,
     updated: false,
     author: DEFAULT_AUTHOR,
-    showUploadDialog: false
+    showUploadDialog: false,
+    errorMessages: [] as string[]
   }
 
   constructor(props: UploadImagePageProps) {
@@ -150,20 +156,43 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   }
 
   upload = async () => {
+    const author = this.state.author
+    let { errorMessages, files } = this.state
     let price = new BigNumber(0)
-    const images = []
+
+    errorMessages = []
+
+    if (author.length > 100) {
+      errorMessages.push('Author name ' + author.substring(0, 100) + '... exceeds the limit of 100 characters.')
+      this.setState({ errorMessages })
+
+      return
+    }
 
     for (const image of this.state.files) {
+      let error = false
       const imageData = await getImageData(image)
 
       image.width = imageData.width
       image.height = imageData.height
 
+      if (image.name.length > 100) {
+        errorMessages.push('Image name ' + image.name.substring(0, 100) + '... exceeds the limit of 100 characters.')
+        error = true
+      }
+
+      if (imageData.base64.length > 4000000) {
+        errorMessages.push('Image ' + image.name.substring(0, 100) + '... is too large to be transfered.')
+        error = true
+      }
+
       price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
+      if (!error) {
+        files = files.filter((value: UploadImage) => image.name !== value.name)
+      }
     }
 
     const result = await this.props.api.upload(this.state.files, price)
-    // TODO: Show error
   }
 
   updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
@@ -225,7 +254,13 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
             </Typography>
           </div>
         </Dropzone>
-        <br/>
+        {this.state.errorMessages.map((errorMessage: string, index: number) => {
+          return (
+            <Typography variant='body1' component='p' className={classes.errorText}>
+              <strong>Error: </strong>{errorMessage}
+            </Typography>
+          )
+        })}
 
         <Dialog open={this.state.showUploadDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
           {
@@ -248,6 +283,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
             </React.Fragment>
           }
         </Dialog>
+        <br />
         {this.renderMasonry()}
         <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)}/>
       </div>
