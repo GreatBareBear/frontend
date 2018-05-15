@@ -5,10 +5,8 @@ import { categories } from '../models/categories'
 import EditableText from './EditableText'
 import { WithStyles, withStyles } from './withStyles'
 import { UploadImage } from '../models/UploadImage'
-import { DEFAULT_AUTHOR } from '../routes/UploadImagePage'
 import { calculateImagePrice, getImageData } from '../models/Image'
 import BigNumber from 'bignumber.js'
-import { green } from 'material-ui/colors'
 
 const styles = (theme: Theme) => ({
   categoryPicker: {
@@ -32,14 +30,18 @@ const styles = (theme: Theme) => ({
     textAlign: 'end',
     paddingRight: '12px'
   } as CSSProperties,
-  checkboxRoot: {
+  checkboxContainer: {
     position: 'absolute',
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    width: '56px',
+    width: '50px',
     borderBottomRightRadius: '100%',
-    height: '56px',
+    height: '50px',
     display: 'flex'
-  } as CSSProperties
+  } as CSSProperties,
+  checkboxRoot: {
+    marginLeft: '-3px',
+    marginTop: '-3px'
+  }
 })
 
 type UploadedImageCardProps = WithStyles & {
@@ -117,12 +119,8 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
     const classes = this.props.classes
     return (
       <Card className={classes.card} key={index}>
-        <div className={classes.checkboxRoot}>
-          <Checkbox
-            checked={this.props.isSelected}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => this.props.selectFileCallback(e.target.checked) }
-            color='primary'
-          />
+        <div className={classes.checkboxContainer}>
+          <Checkbox className={classes.checkboxRoot} checked={this.props.isSelected} onChange={(e: React.ChangeEvent<HTMLInputElement>) => this.props.selectFileCallback(e.target.checked) } color='primary'/>
         </div>
         <CardMedia className={classes.media} image={file.preview} title={file.name}/>
         <CardContent>
@@ -140,7 +138,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
         </CardContent>
         <CardActions>
           <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
-            Cancel
+            Delete
           </Button>
           <Button size='small' color='primary'>
             Upload

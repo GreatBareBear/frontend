@@ -60,6 +60,7 @@ const endpointSelectTheme = createMuiTheme({
 @withApi()
 class TopBar extends React.Component<TopBarProps> {
   state = {
+    // TODO: This should be Mainnet in prod
     currentEndpoint: 'Testnet'
   }
 

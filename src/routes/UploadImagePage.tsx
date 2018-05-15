@@ -58,8 +58,8 @@ const styles = (theme: Theme) => ({
   errorText: {
     color: red[500]
   },
-  selectedAppBar: { 
-    top: 0, 
+  selectedAppBar: {
+    top: 0,
     left: 0,
     zIndex: theme.zIndex.appBar * 4
   }
@@ -134,6 +134,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
   onDrop = (acceptedFiles: ImageFile[], rejectedFiles: ImageFile[]) => {
     const files = this.state.files
+
     acceptedFiles.forEach((element: ImageFile) => {
       files.push({
         name: element.name.replace(/\.[^/.]+$/, ''),
@@ -144,6 +145,9 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         file: element
       })
     })
+
+    this.addToSelectedFilesList(files, true)
+
     this.setState({ files, updated: true })
   }
 
@@ -170,23 +174,24 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
   addToSelectedFilesList(files: UploadImage[], isSelected: boolean) {
     let selectedFiles = this.state.selectedFiles
+
     if (isSelected) {
       selectedFiles = selectedFiles.concat(files)
     } else {
       selectedFiles = selectedFiles.filter((value: UploadImage) => !files.includes(value))
     }
+
     this.setState({ selectedFiles })
   }
 
-  upload = async () => {
+  handleUpload = async () => {
     const author = this.state.author
-    let { errorMessages, files } = this.state
-    let price = new BigNumber(0)
+    let { errorMessages } = this.state
 
     errorMessages = []
 
-    if (author.length > 100) {
-      errorMessages.push('Author name ' + author.substring(0, 100) + '... exceeds the limit of 100 characters.')
+    if (author.length > 10000) {
+      errorMessages.push('Author name ' + author.substring(0, 10000) + '... exceeds the limit of 10000 characters.')
       this.setState({ errorMessages })
 
       return
@@ -194,25 +199,30 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
     for (const image of this.state.files) {
       let error = false
+
+      if (image.name.length > 10000) {
+        errorMessages.push('Image name ' + image.name.substring(0, 10000) + '... exceeds the limit of 10000 characters.')
+        error = true
+      }
+    }
+
+    if (errorMessages.length === 0) {
+      this.setState({
+        showUploadDialog: true
+      })
+    }
+  }
+
+  upload = async () => {
+    let price = new BigNumber(0)
+
+    for (const image of this.state.files) {
       const imageData = await getImageData(image)
 
       image.width = imageData.width
       image.height = imageData.height
 
-      if (image.name.length > 100) {
-        errorMessages.push('Image name ' + image.name.substring(0, 100) + '... exceeds the limit of 100 characters.')
-        error = true
-      }
-
-      if (imageData.base64.length > 4000000) {
-        errorMessages.push('Image ' + image.name.substring(0, 100) + '... is too large to be transfered.')
-        error = true
-      }
-
       price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
-      if (!error) {
-        files = files.filter((value: UploadImage) => image.name !== value.name)
-      }
     }
 
     const result = await this.props.api.upload(this.state.files, price)
@@ -242,7 +252,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         }
         <Typography variant='subheading' className={classes.yourImages}>
           Your images ({this.state.files.length}):
-          <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.setState({ showUploadDialog: true })}>
+          <Button variant='raised' className={classes.uploadButton} color='primary' onClick={this.handleUpload}>
             {this.state.files.length > 1 ? 'Upload all' : 'Upload'}
           </Button>
           <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.files)}>
@@ -266,21 +276,6 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
     return (
       <div>
-        <Slide direction='down' in={this.state.selectedFiles.length > 0}>
-          <AppBar position='fixed' className={classes.selectedAppBar} color='default'>
-            <Toolbar>
-              <Typography variant='title' color='inherit' style={{ flex: 1 }}>
-                {this.state.selectedFiles.length} selected files
-              </Typography>
-              <Button color='secondary' onClick={() => {this.addToRemoveFilesList(this.state.selectedFiles); this.deselectFiles(this.state.selectedFiles)}}>
-                Cancel selected
-              </Button>
-              <Button color='primary' onClick={() => { /* TODO: upload selected */ this.deselectFiles(this.state.selectedFiles) }}>
-                Upload selected
-              </Button>
-            </Toolbar>
-          </AppBar>
-        </Slide >
         <Typography variant='title'>
           Upload new image
         </Typography>
@@ -300,7 +295,9 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
           )
         })}
 
-        <Dialog open={this.state.showUploadDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
+        <Dialog open={this.state.showUploadDialog} onClose={() => this.setState({
+          showUploadDialog: false
+        })} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
           {
             this.state.showUploadDialog &&
             <React.Fragment>
@@ -321,7 +318,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
             </React.Fragment>
           }
         </Dialog>
-        <br />
+        <br/>
         {this.renderMasonry()}
         <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)}/>
       </div>
