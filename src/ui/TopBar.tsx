@@ -70,7 +70,7 @@ class TopBar extends React.Component<TopBarProps> {
   updateEndpoint = (event: any) => {
     const isTestnet = event.target.value === 'Testnet'
 
-    this.props.api.setApiOptions({ testnet: isTestnet })
+    this.props.api.setApi(isTestnet)
     this.props.onEndpointChange(isTestnet)
     this.setState({ currentEndpoint: event.target.value })
   }

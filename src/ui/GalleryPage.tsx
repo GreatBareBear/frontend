@@ -114,7 +114,6 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
       // If we can, and we still don't know is there any more images to load, load more images.
       if (this.isGalleryScrollable && this.props.anyImages) {
         if (!this.forcePushCooldownActive) {
-          console.log('handleScroll will be called.')
           setTimeout(() => this.props.pushMoreCallback(10, true), this.props.infiniteScrollCooldownLength)
           this.forcePushCooldownActive = true
           setTimeout(() => this.forcePushCooldownActive = false, this.props.infiniteScrollCooldownLength / 2)

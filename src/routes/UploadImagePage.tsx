@@ -71,7 +71,8 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   price: BigNumber,
   usdPrice: BigNumber,
   updated: boolean,
-  author: string
+  author: string,
+  showUploadDialog: boolean
 }> {
   state = {
     files: [] as UploadImage[],
@@ -79,7 +80,12 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     price: null,
     usdPrice: null,
     updated: false,
-    author: DEFAULT_AUTHOR
+    author: DEFAULT_AUTHOR,
+    showUploadDialog: false
+  }
+
+  constructor(props: UploadImagePageProps) {
+    super(props)
   }
 
   async componentDidUpdate() {
@@ -121,7 +127,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         preview: element.preview,
         category: '',
         type: element.type,
-        author: DEFAULT_AUTHOR,
+        author: this.state.author,
         file: element
       })
     })
@@ -144,29 +150,35 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   }
 
   upload = async () => {
+    let price = new BigNumber(0)
+    const images = []
+
     for (const image of this.state.files) {
       const imageData = await getImageData(image)
-      const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
-      account.setPrivateKey('0e3af9beaed8519942b7d8c8481df7f4716b3ff32b15e752501ad9afd70b92cd')
+      image.width = imageData.width
+      image.height = imageData.height
 
-      console.log(imageData.base64)
-
-      const result = await this.props.api.upload(imageData.width, imageData.height, imageData.base64, image.name, image.author, image.category, account, Unit.toBasic(new BigNumber(new BigNumber(imageData.width * imageData.height).div(18300000).toFixed(18)), 'nas'))
-
-      // TODO: Show error
+      price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
     }
+
+    const result = await this.props.api.upload(this.state.files, price)
+    // TODO: Show error
   }
 
   updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
-    let { author } = this.state
+    const { files } = this.state
+    const author = event.target.value
 
-    author = event.target.value
+    for (const file of files) {
+      file.author = author
+    }
 
     this.setState({
+      files,
       author
     })
-  } 
+  }
 
   renderMasonry() {
     const { classes } = this.props
@@ -174,17 +186,17 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     return (
       <React.Fragment>
         {this.state.files.length > 0 &&
-          <TextField label='Images author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal' />
+        <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
         }
         <Typography variant='subheading' className={classes.yourImages}>
           Your images ({this.state.files.length}):
-          <Button variant='raised' className={classes.uploadButton} color='primary' onClick={this.upload}>
+          <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.setState({ showUploadDialog: true })}>
             {this.state.files.length > 1 ? 'Upload all' : 'Upload'}
           </Button>
           <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.files)}>
             {this.state.files.length > 1 ? 'Delete all' : 'Delete'}
           </Button>
-          {this.state.price && this.state.usdPrice && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~{this.state.usdPrice.toString()} USD)</Typography>}
+          {this.state.price && this.state.usdPrice && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
         </Typography>
         <Masonry elementType={'div'}>
           {this.state.files.map((file: UploadImage, index: number) => {
@@ -214,6 +226,28 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
           </div>
         </Dropzone>
         <br/>
+
+        <Dialog open={this.state.showUploadDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
+          {
+            this.state.showUploadDialog &&
+            <React.Fragment>
+              <DialogTitle>Upload image(s)</DialogTitle>
+              <DialogContent>
+                <DialogContentText>
+                  Are you sure you want to upload {this.state.files.length} images for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?
+                </DialogContentText>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => this.setState({ showUploadDialog: false })} color='secondary' autoFocus>
+                  No
+                </Button>
+                <Button onClick={() => this.upload()} color='primary'>
+                  Yes
+                </Button>
+              </DialogActions>
+            </React.Fragment>
+          }
+        </Dialog>
         {this.renderMasonry()}
         <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)}/>
       </div>

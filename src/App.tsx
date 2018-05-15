@@ -120,7 +120,7 @@ class App extends React.Component<AppProps, {
 
     this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
-    const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, account, new BigNumber(0))
+    const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, new BigNumber(0))
     
     if (result.length === 0) {
       this.setState({ images, galleryShouldBeLoading: false, anyImages: false })
@@ -171,7 +171,6 @@ class App extends React.Component<AppProps, {
               <Route exact path='/upload' component={UploadImagePage}/>
               <Route path='/category/:id' render={({ match }) => {
                 if (this.category.name !== match.params.id) {
-                  console.log('Category changed from',this.category.name,'to',match.params.id)
                   this.category.name = match.params.id
                   this.category.updated = false                 
                 }

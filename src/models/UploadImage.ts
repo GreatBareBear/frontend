@@ -1,5 +1,4 @@
 import { ImageFile } from 'react-dropzone'
-import BigNumber from 'bignumber.js'
 
 export interface UploadImage {
   name: string
@@ -7,5 +6,7 @@ export interface UploadImage {
   category: string
   type: string
   author: string
+  width?: number
+  height?: number
   file: ImageFile
 }
