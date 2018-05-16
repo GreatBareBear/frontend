@@ -2,6 +2,7 @@ import { ImageFile } from 'react-dropzone'
 
 export interface UploadImage {
   name: string
+  url?: string
   preview: string
   category: string
   type: string

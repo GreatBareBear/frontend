@@ -21,3 +21,11 @@ export function removeUndefined(object: {}) {
 
   return result
 }
+
+export function pluralize(word: string, count: number) {
+  if (count > 1) {
+    return word + 's'
+  }
+
+  return word
+}

@@ -1,9 +1,10 @@
 interface NebPay {
-  pay(to: Address, value: string, options: NebPayOptions)
-  nrc20Pay(currency: string, to: Address, value: string, options?: NebPayOptions)
-  deploy(code: string, language: string, args: string, options?: NebPayOptions)
-  call(to: Address, value: string, functionName: string, args: string, options?: NebPayOptions)
-  simulateCall(to: Address, value: string, functionName: string, args: string, options?: NebPayOptions)
+  pay(to: Address, value: string, options?: NebPayOptions): SerialNumber
+  nrc20Pay(currency: string, to: Address, value: string, options?: NebPayOptions): SerialNumber
+  deploy(code: string, language: string, args: string, options?: NebPayOptions): SerialNumber
+  call(to: Address, value: string, functionName: string, args: string, options?: NebPayOptions): SerialNumber
+  simulateCall(to: Address, value: string, functionName: string, args: string, options?: NebPayOptions): SerialNumber
+  queryPayInfo(serialNumber: string, options?: NebPayOptions): string
 }
 
 interface NebPayOptions {
@@ -18,7 +19,7 @@ interface NebPayOptions {
     container?
   }
   callback?: string
-  listener?: (response: ContractCallResult) => void
+  listener?: (response: ContractCallResult | string) => void
   nrc20?: Nrc20Currency
 }
 
@@ -28,6 +29,8 @@ interface Nrc20Currency {
   symbol: string
   decimals: number
 }
+
+type SerialNumber = string
 
 interface Block {
   hash: Hash

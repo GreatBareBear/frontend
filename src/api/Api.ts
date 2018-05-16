@@ -3,13 +3,16 @@ import * as NebulasPay from '../nebPay/nebpay.js'
 import { getCategoryId } from '../models/categories'
 import Nebulas from '../nebulify/Nebulas'
 import Account from '../nebulify/Account'
-import { chunkString } from '../utils'
 import { UploadImage } from '../models/UploadImage'
 
-export const contractAddress = 'n1n3b2TBwHxat9FaXXr2qj5veqAruL2R9nt'
+export const testnetContractAddress = 'n1ygGmZAQdTM4rkqfh3HpLtXZ59BTTP2FEG'
 export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
 
-type CallResult = ContractCallResult & {
+export type CallResult = NebulasCallResult & {
+  serialNumber?: string
+} | string
+
+export type NebulasCallResult = ContractCallResult & {
   transaction?: {
     txHash: Hash,
     contractAddress: Address
@@ -20,9 +23,7 @@ export default class Api {
   public isTestnet: boolean
 
   private nebulas: Nebulas
-  private account: Account
   private nebPay: NebPay
-  private run = false
 
   get chainId() {
     return this.isTestnet ? 1001 : 100 // TODO: 1 might not be mainnet
@@ -37,17 +38,19 @@ export default class Api {
     this.nebPay = new NebulasPay()
   }
 
-  async upload(images: UploadImage[], value: BigNumber, dryRun: boolean = false) {
-    const result = await this.call('upload', images.map((image) => ({
+  async payUpload(value: BigNumber, dryRun: boolean = false): Promise<CallResult> {
+    return await this.call('payUpload', [], value, dryRun)
+  }
+
+  async upload(images: UploadImage[], dryRun: boolean = false) {
+    return await this.call('upload', [images.map((image) => ({
       width: image.width,
       height: image.height,
       name: image.name,
       author: image.author,
-      urlHash: '',
+      url: image.url,
       category: getCategoryId(image.category) - 1
-    })), value, dryRun)
-
-    return result
+    }))], new BigNumber(0), dryRun)
   }
 
   async getImageCount() {
@@ -74,22 +77,40 @@ export default class Api {
     return JSON.parse(raw === '' ? '[]' : raw)
   }
 
+  async returnPaidUpload(dryRun: boolean = false) {
+    return await this.call('returnPaidUpload', [], new BigNumber(0), dryRun)
+  }
+
+  async getTransactionInfo(serialNumber: SerialNumber, options?: NebPayOptions) {
+    return this.nebPay.queryPayInfo(serialNumber, options)
+  }
+
   async call(functionName: string, payload: {}, value: BigNumber, dryRun: boolean = false): Promise<CallResult> {
     return new Promise<CallResult>((resolve) => {
       const args = JSON.stringify(payload)
       const callbackUrl = this.isTestnet ? NebulasPay.config.testnetUrl : NebulasPay.config.mainnetUrl
 
       if (dryRun) {
-        this.nebPay.simulateCall(contractAddress, value.toString(), functionName, args, {
+        this.nebPay.simulateCall(testnetContractAddress, value.toString(), functionName, args, {
           listener: (response) => {
             resolve(response)
           },
           callback: callbackUrl
         })
       } else {
-        this.nebPay.call(contractAddress, value.toString(), functionName, args, {
-          listener: (response) => {
-            resolve(response)
+        const serialNumber = this.nebPay.call(testnetContractAddress, value.toString(), functionName, args, {
+          listener: (response: any) => {
+            if (typeof response  === 'string') {
+              resolve({
+                response,
+                serialNumber
+              } as any)
+            } else {
+              resolve({
+                ...response,
+                serialNumber
+              })
+            }
           },
           callback: callbackUrl
         })
@@ -97,8 +118,8 @@ export default class Api {
     })
   }
 
-  async nebulasCall(functionName: string, payload: {}, value: BigNumber = new BigNumber(0)): Promise<CallResult> {
-    return new Promise<CallResult>(async (resolve) => {
+  async nebulasCall(functionName: string, payload: {}, value: BigNumber = new BigNumber(0)): Promise<NebulasCallResult> {
+    return new Promise<NebulasCallResult>(async (resolve) => {
       const nonce = (await this.nebulas.api.getAccountState(imgCubeAccount.getAddress())).nonce + 1
 
       const contract = {
@@ -108,7 +129,7 @@ export default class Api {
 
       this.nebulas.api.call({
         from: imgCubeAccount.getAddress(),
-        to: contractAddress,
+        to: testnetContractAddress,
         value: value.toString(),
         nonce,
         gasPrice: 1000000,

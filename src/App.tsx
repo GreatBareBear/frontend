@@ -109,14 +109,12 @@ class App extends React.Component<AppProps, {
   }
 
   updateImageList = async (imageCount: number = 40, append: boolean = false) => {
-    
     if (this.state.galleryShouldBeLoading) {
       return
     }
     
     const images = append ? this.state.images : []
     const categoryName = this.category.name
-    const account = Account.fromAddress('n1dKm4RoCwaCipdagufwwkgfbMYxTLu1ZbP')
 
     this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
@@ -135,7 +133,7 @@ class App extends React.Component<AppProps, {
       images.push({
         index: imageIndex,
         name: rawImage.name,
-        src: rawImage.base64,
+        src: `https://imgur.com/${rawImage.hash}`,
         author: rawImage.author,
         width: rawImage.width,
         height: rawImage.height
