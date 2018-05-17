@@ -27,7 +27,7 @@ const styles = (theme: Theme) => ({
   },
   priceText: {
     marginLeft: 'auto',
-    textAlign: 'end',
+    textAlign: 'start',
     paddingRight: '12px'
   } as CSSProperties,
   checkboxContainer: {
@@ -137,13 +137,13 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
           </FormControl>
         </CardContent>
         <CardActions>
+          {this.state.price && this.state.usdPrice && <Typography className={classes.priceText}>{this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
           <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
             Delete
           </Button>
           <Button size='small' color='primary'>
             Upload
           </Button>
-          {this.state.price && this.state.usdPrice && <Typography className={classes.priceText}>{this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
         </CardActions>
       </Card>
     )

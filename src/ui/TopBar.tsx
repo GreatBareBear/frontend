@@ -5,9 +5,9 @@ import { Theme } from 'material-ui/styles/'
 import * as React from 'react'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
 import { WithStyles, withStyles } from './withStyles'
-import { default as createPalette, Palette } from 'material-ui/styles/createPalette'
 import { withApi } from '../api/withApi'
 import Api from '../api/Api'
+import * as Logo from '../assets/Logo.png'
 
 const styles = (theme: Theme) => ({
   flex: {
@@ -82,12 +82,17 @@ class TopBar extends React.Component<TopBarProps> {
       <div className={classes.root}>
         <AppBar position='absolute' className={classes.appBar}>
           <Toolbar>
+            <img src={Logo} style={{
+              width: '50px',
+              height: '60px',
+              margin: '5px'
+            }}/>
             <Typography variant='title' color='inherit' className={classNames(classes.flex)}>
               <a className={classes.title} onClick={() => this.props.history.push('/')}>imgCube</a>
             </Typography>
             <MuiThemeProvider theme={endpointSelectTheme}>
               <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' disableUnderline={true} onChange={this.updateEndpoint}>
-              <MenuItem value='Mainnet'>Mainnet</MenuItem>
+                <MenuItem value='Mainnet'>Mainnet</MenuItem>
                 <MenuItem value='Testnet'>Testnet</MenuItem>
               </Select>
             </MuiThemeProvider>
