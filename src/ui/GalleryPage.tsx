@@ -1,4 +1,4 @@
-import { CircularProgress, LinearProgress, Typography, Modal, Theme } from 'material-ui'
+import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton  } from 'material-ui'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
@@ -8,6 +8,8 @@ import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
 import { Link } from 'react-router-dom'
 import { CSSProperties } from 'material-ui/styles/withStyles'
+import CloseIcon from '@material-ui/icons/Close'
+import { Fade } from 'material-ui'
 import _ = require('lodash')
 
 const styles = (theme: Theme) => ({
@@ -26,12 +28,28 @@ const styles = (theme: Theme) => ({
   imageLightBox: {
     position: 'absolute',
     outline: 0,
-    padding: theme.spacing.unit * 4,
+    padding: theme.spacing.unit,
     left: '50%',
     top: '50%',
     transform: 'translate(-50%, -50%)',
-    backgroundColor: 'white',
-    color: 'white'
+    color: 'white',
+    borderRadius: '20px'
+  } as CSSProperties,
+  imageLightBoxDesc: {
+    position: 'absolute',
+    marginTop: '-120px',
+    background: 'rgba(255, 255, 255, 0.3)',
+    width: 'calc(100% - '+theme.spacing.unit * 2+'px)',
+    color: 'white',
+    padding: theme.spacing.unit * 2
+  } as CSSProperties,
+  imageLightBoxCloseBtn: {
+    color: 'white',
+    position: 'absolute',
+    right: theme.spacing.unit * 2 + 'px',
+    top: theme.spacing.unit * 2 + 'px',
+    width: theme.spacing.unit * 4 + 'px',
+    height: theme.spacing.unit * 4 + 'px'
   } as CSSProperties
 })
 
@@ -186,26 +204,37 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
           <div className='GalleryLoadingMore'>
           {this.isGalleryScrollable ? <CircularProgress color='primary' /> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress} /> : <LinearProgress variant='indeterminate' className={classes.linearProgress} />}
           </div>}
-        {this.lightBox.isShown &&
-          <Modal
-            open={this.lightBox.isShown}
-            onClose={() => this.hideLightbox()}
-          >
-            <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
-              <Typography variant='headline' style={{
-                marginBottom: '15px'
-              }}>
-                {this.lightBox.image.name}
-              </Typography>
-              <img src={this.lightBox.image.src} style={{ maxWidth: '700px' }} />
-              <Typography variant='subheading' style={{
-                marginTop: '15px'
-              }}>
-                Created by: {this.lightBox.image.author}
-              </Typography>
-            </div>
-          </Modal>
-        }
+        <Fade
+          in={this.lightBox.isShown}
+        >
+          <div>
+            {this.lightBox.isShown &&
+              <Modal
+                open={this.lightBox.isShown}
+                onClose={() => this.hideLightbox()}
+              >
+                <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
+                <IconButton className={classes.imageLightBoxCloseBtn} onClick={() => this.hideLightbox()}>
+                    <CloseIcon />
+                  </IconButton>
+                  <img src={this.lightBox.image.src} style={{ maxWidth: '700px' }} />
+                  <div className={classes.imageLightBoxDesc}>
+                    <Typography variant='headline' component='strong' style={{
+                      marginBottom: '15px'
+                    }}>
+                      {this.lightBox.image.name}
+                    </Typography>
+                    <Typography variant='subheading' style={{
+                      marginTop: '15px'
+                    }}>
+                      <strong>Created by:</strong> {this.lightBox.image.author}
+                    </Typography>
+                  </div>
+                </div>
+              </Modal> 
+            }
+          </div>
+        </Fade>
       </React.Fragment>
     )
   }
