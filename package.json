@@ -3,15 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^1.0.0",
     "@material-ui/icons": "^1.0.0-beta.43",
-    "@types/classnames": "^2.2.3",
-    "@types/node": "9.6.7",
-    "@types/react-dropzone": "^4.2.0",
-    "@types/react-infinite-scroller": "^1.0.6",
-    "@types/react-router": "^4.0.24",
-    "@types/react-router-dom": "^4.2.6",
-    "@types/react-virtualized": "^9.18.3",
-    "@types/webfontloader": "^1.6.29",
     "bignumber.js": "^7.0.1",
     "classnames": "^2.2.5",
     "core-js": "^2.5.6",
@@ -19,7 +12,6 @@
     "ipfs-api": "^21.0.0",
     "isomorphic-fetch": "^2.2.1",
     "lodash": "^4.17.10",
-    "lz-string": "^1.4.4",
     "material-ui": "^1.0.0-beta.43",
     "mobx": "^4.2.0",
     "mobx-react": "^5.0.0",
@@ -28,12 +20,11 @@
     "react": "^16.3.2",
     "react-dom": "^16.3.2",
     "react-dropzone": "^4.2.9",
-    "react-infinite-scroller": "^1.1.4",
     "react-masonry-component": "^6.2.0",
     "react-router": "^4.2.0",
     "react-router-dom": "^4.2.2",
-    "react-scripts-ts": "2.15.1",
-    "react-transition-group": "^2.3.1",
+    "react-scripts-ts": "^2.16.0",
+    "typescript": "^2.8.3",
     "webfontloader": "^1.6.28"
   },
   "scripts": {
@@ -43,13 +34,16 @@
     "eject": "react-scripts-ts eject"
   },
   "devDependencies": {
+    "@types/classnames": "^2.2.3",
     "@types/core-js": "^0.9.46",
-    "@types/jest": "^22.2.3",
     "@types/lodash": "^4.14.108",
-    "@types/lz-string": "^1.3.32",
+    "@types/node": "^10.1.1",
     "@types/react": "^16.3.13",
     "@types/react-dom": "^16.0.5",
-    "tslint-eslint-rules": "^5.1.0",
-    "typescript": "^2.8.3"
+    "@types/react-dropzone": "^4.2.0",
+    "@types/react-router": "^4.0.24",
+    "@types/react-router-dom": "^4.2.6",
+    "@types/webfontloader": "^1.6.29",
+    "tslint-eslint-rules": "^5.1.0"
   }
 }
