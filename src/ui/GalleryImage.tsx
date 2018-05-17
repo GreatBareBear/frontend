@@ -43,23 +43,15 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
   }
 
   onDownloadClicked = () => {
-    const element = document.createElement('a')
-    element.setAttribute('href', this.props.imageReference.src)
-    element.setAttribute('download', this.props.imageReference.name + '.' + this.props.imageReference.src.split(';')[0].split('/')[1])
-
-    element.style.display = 'none'
-    document.body.appendChild(element)
-
-    element.click()
-
-    document.body.removeChild(element)
+    const src = this.props.imageReference.src
+    // TODO: Download
   }
 
   render() {
     const { classes } = this.props
 
     return (
-      <div key={this.props.imageReference.index} className='GalleryImage'>
+      <div key={this.props.imageReference.index} className='GalleryImage' /* TODO: New info feature here*/>
         <img onLoad={() => this.showImage()} onError={() => this.showImage()} src={this.props.imageReference.src} alt={this.props.imageReference.name} title={this.props.imageReference.name}/>
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>

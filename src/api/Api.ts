@@ -1,11 +1,12 @@
 import BigNumber from 'bignumber.js'
+import * as ipfsApi from 'ipfs-api'
 import * as NebulasPay from '../nebPay/nebpay.js'
 import { getCategoryId } from '../models/categories'
 import Nebulas from '../nebulify/Nebulas'
 import Account from '../nebulify/Account'
 import { UploadImage } from '../models/UploadImage'
 
-export const testnetContractAddress = 'n1ygGmZAQdTM4rkqfh3HpLtXZ59BTTP2FEG'
+export const testnetContractAddress = 'n1kVrAU1s9m862DZcJm2Bkf3hcUB627rvuL'
 export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
 
 export type CallResult = NebulasCallResult & {
@@ -21,6 +22,7 @@ export type NebulasCallResult = ContractCallResult & {
 
 export default class Api {
   public isTestnet: boolean
+  public ipfs
 
   private nebulas: Nebulas
   private nebPay: NebPay
@@ -36,9 +38,10 @@ export default class Api {
     this.setApi(true)
 
     this.nebPay = new NebulasPay()
+    this.ipfs = ipfsApi('165.227.161.44')
   }
 
-  async payUpload(value: BigNumber, dryRun: boolean = false): Promise<CallResult> {
+  async payUpload(value: BigNumber, dryRun: boolean = false): Promise<any> {
     return await this.call('payUpload', [], value, dryRun)
   }
 
@@ -48,17 +51,13 @@ export default class Api {
       height: image.height,
       name: image.name,
       author: image.author,
-      url: image.url,
+      url: image.hash,
       category: getCategoryId(image.category) - 1
     }))], new BigNumber(0), dryRun)
   }
 
-  async getImageCount() {
+  async getImageCount(): Promise<any> {
     return this.call('getImageCount', [], new BigNumber(0), true)
-  }
-
-  async getImagesUploadingCount() {
-    return this.call('getImagesUploadingCount', [], new BigNumber(0), true)
   }
 
   async query(count: number, offset: number, category: string, value: BigNumber) {

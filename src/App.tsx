@@ -2,10 +2,10 @@ import { createMuiTheme, CssBaseline, Drawer, ListItem, ListItemText, ListSubhea
 import { Theme } from 'material-ui/styles/'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import * as React from 'react'
-import { Route, RouteComponentProps, Switch, withRouter } from 'react-router'
+import { Redirect, Route, RouteComponentProps, Switch, withRouter } from 'react-router'
 import { indigo, red } from 'material-ui/colors'
-import * as _ from 'lodash'
 import BigNumber from 'bignumber.js'
+import * as _ from 'lodash'
 import UploadImagePage from './routes/UploadImagePage'
 import GalleryPage from './ui/GalleryPage'
 import TopBar from './ui/TopBar'
@@ -14,7 +14,6 @@ import { Image } from './models/Image'
 import { categories, isValidCategory } from './models/categories'
 import { withApi } from './api/withApi'
 import Api from './api/Api'
-import Account from './nebulify/Account'
 
 const styles = (theme: Theme) => ({
   root: {
@@ -101,7 +100,7 @@ class App extends React.Component<AppProps, {
     categories.forEach((element, index) => {
       categoryButtonList.push(
         <ListItem button onClick={() => this.props.history.push('/category/' + element)} key={index}>
-          <ListItemText primary={element}/>
+          <ListItemText primary={_.startCase(element)}/>
         </ListItem>
       )
     })
@@ -126,21 +125,38 @@ class App extends React.Component<AppProps, {
 
       return
     }
-    
+
     const imagesLength = this.state.images.length
+
+    const promises = []
+
     for (const [index, rawImage] of result.entries()) {
-      const imageIndex = index + imagesLength
-      images.push({
-        index: imageIndex,
-        name: rawImage.name,
-        src: rawImage.url,
-        author: rawImage.author,
-        width: rawImage.width,
-        height: rawImage.height
+      const promise = this.props.api.ipfs.files.get(`${rawImage.url}`)
+
+      promises.push(promise)
+
+      promise.then((files, error) => {
+        if (error) {
+          console.error(error)
+
+          return
+        }
+
+        images.push({
+          index: index + imagesLength,
+          name: rawImage.name,
+          src: files[0].content.toString('utf8'),
+          author: rawImage.author,
+          width: rawImage.width,
+          height: rawImage.height
+        })
       })
     }
-    this.category.updated = true
-    this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
+
+    Promise.all(promises).then(() => {
+      this.category.updated = true
+      this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
+    })
   }
 
   updateEndpoint = () => {
@@ -172,26 +188,23 @@ class App extends React.Component<AppProps, {
                   this.category.name = match.params.id
                   this.category.updated = false                 
                 }
+
                 if (isValidCategory(match.params.id)) {
-                  return (
-                    <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages} />
-                  )
+                  if (match.params.id !== match.params.id.toLowerCase()) {
+                    return <Redirect to={`/category/${match.params.id.toLowerCase()}`}/>
+                  }
+
+                  return <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages} />
                 } else {
                   return (
-                    <div>
-                      Category {match.params.id} does not exist.
-                    </div>
+                    <Typography variant={'title'}>
+                      Category '{match.params.id}' does not exist.
+                    </Typography>
                   )
                 }
-                
               }}/>
               <Route path='/' render={() => {
-                if (this.category.name !== 'All') {
-                  this.category = { name: 'All', updated: false }
-                }
-                return (
-                  <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
-                )
+                return <Redirect to='/category/all'/>
               }}/>
             </Switch>
           </div>

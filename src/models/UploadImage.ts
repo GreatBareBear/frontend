@@ -2,7 +2,8 @@ import { ImageFile } from 'react-dropzone'
 
 export interface UploadImage {
   name: string
-  url?: string
+  hash?: string
+  base64?: string
   preview: string
   category: string
   type: string

@@ -98,10 +98,6 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     errorMessages: [] as string[]
   }
 
-  constructor(props: UploadImagePageProps) {
-    super(props)
-  }
-
   async componentDidUpdate() {
     if (this.state.updated === false) {
       return
@@ -160,12 +156,15 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   }
 
   removeFiles(shouldRemoveFiles: boolean, filesToRemoveArray: UploadImage[]) {
-    let { files, filesToRemove } = this.state
+    let { files, filesToRemove, selectedFiles } = this.state
+
     if (shouldRemoveFiles) {
       files = files.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
+      selectedFiles = selectedFiles.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
     }
+
     filesToRemove = filesToRemove.filter((value: UploadImage) => !filesToRemoveArray.includes(value))
-    this.setState({ files, filesToRemove, updated: true })
+    this.setState({ files, filesToRemove, selectedFiles, updated: true })
   }
 
   addToRemoveFilesList(files: UploadImage[]) {
@@ -227,12 +226,13 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
       image.width = imageData.width
       image.height = imageData.height
+      image.base64 = imageData.base64
 
       price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
     }
 
-    this.props.api.payUpload(price).then((response) => {
-      if (typeof response === 'string' && response as string === 'Error: Transaction rejected by user') {
+    this.props.api.payUpload(price, true).then(async (response) => {
+      if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
         this.setState({
           showUploadDialog: false,
           showUploadProgress: false
@@ -245,68 +245,68 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         showUploadProgress: true
       })
 
-      const requests = []
-
       const serialNumber = (response as any).serialNumber
+      const selectedFiles = this.state.selectedFiles
 
-      for (const image of this.state.selectedFiles) {
-        const imageFormData = new FormData()
+      const imageCount = parseInt((await this.props.api.getImageCount()).result, 10)
 
-        imageFormData.append('image', image.file)
-
-        const promise = fetch('https://api.imgur.com/3/image', {
-          method: 'POST',
-          body: imageFormData,
-          headers: {
-            Authorization: 'Client-ID e6ae5dc4f27e2b7'
-          }
-        })
-
-        requests.push(new Promise((resolve) => {
-          promise.then((response) => response.json()).then((response) => {
-            if (response.success) {
-              image.url = response.data.link
-            }
-
-            resolve()
+      this.props.api.ipfs.files.add(selectedFiles.map((image, index) => ({
+        path: `uploads/${image.name}-${imageCount + index}`,
+        content: Buffer.from(image.base64, 'utf8')
+      }) as any)).then((filesAdded, error) => {
+        if (!error) {
+          selectedFiles.forEach((file, index) => {
+            file.hash = filesAdded[index].hash
           })
-        }))
-      }
+        } else {
+          console.error(error)
 
-      Promise.all(requests).then(() => {
+          return
+        }
+
         const timer = setInterval(async () => {
           const result = JSON.parse((await this.props.api.getTransactionInfo(serialNumber)))
 
-          /*if (result.data.status === 1) {*/
-          clearInterval(timer)
+          if (result.data.status === 1) {
+            clearInterval(timer)
 
-          this.props.api.upload(this.state.selectedFiles).then((response: any) => {
-            if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
-              this.props.api.returnPaidUpload()
-            } else {
-              // TODO: The images have been uploaded successfully, show some UI/UX here so the user can access the uploaded images. The transactions may not be finished yet so that's a small complication.
+            this.props.api.upload(selectedFiles, true).then((response: any) => {
+              if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
+                this.props.api.returnPaidUpload()
 
-              const files = this.state.files.filter((file) => !this.state.selectedFiles.includes(file))
-              const selectedFiles = []
+                this.setState({
+                  showUploadDialog: false,
+                  showUploadProgress: false
+                })
+              } else {
+                // TODO: The images have been uploaded successfully, show some UI/UX here so the user can access the uploaded images. The transactions may not be finished yet so that's a small complication.
 
-              this.setState({
-                files,
-                selectedFiles,
-                updated: true
-              })
-            }
+                const timer = setInterval(async () => {
+                  const result = JSON.parse((await this.props.api.getTransactionInfo(serialNumber)))
 
-            this.setState({
-              showUploadDialog: false,
-              showUploadProgress: false
+                  if (result.data.status === 1) {
+                    clearInterval(timer)
+
+                    this.setState({
+                      showUploadDialog: false,
+                      showUploadProgress: false
+                    })
+                  }
+                })
+
+                const files = this.state.files.filter((file) => !selectedFiles.includes(file))
+
+                this.setState({
+                  files,
+                  selectedFiles,
+                  updated: true
+                })
+              }
             })
-          })
-          /*}*/
+          }
         }, 10100)
       })
     })
-
-    // const result = await this.props.api.upload(this.state.files, price)
   }
 
   updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
@@ -364,7 +364,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
           <div className={classes.dropZoneContent}>
             <FileUpload className={classes.uploadIcon}/>
             <Typography variant='headline'>
-              Drop images you want to upload here, or click here to open a file dialog.
+              Drop images you want to upload or click here to open a file dialog.
             </Typography>
           </div>
         </Dropzone>
