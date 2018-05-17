@@ -133,7 +133,7 @@ class App extends React.Component<AppProps, {
       images.push({
         index: imageIndex,
         name: rawImage.name,
-        src: `https://imgur.com/${rawImage.hash}`,
+        src: rawImage.url,
         author: rawImage.author,
         width: rawImage.width,
         height: rawImage.height
@@ -143,7 +143,7 @@ class App extends React.Component<AppProps, {
     this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
   }
 
-  updateEndpoint = (isTestnet: boolean) => {
+  updateEndpoint = () => {
     this.updateImageList()
   }
 

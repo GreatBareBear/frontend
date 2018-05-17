@@ -282,7 +282,6 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
           this.props.api.upload(this.state.selectedFiles).then((response: any) => {
             if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
-              console.log('return')
               this.props.api.returnPaidUpload()
             } else {
               // TODO: The images have been uploaded successfully, show some UI/UX here so the user can access the uploaded images. The transactions may not be finished yet so that's a small complication.
