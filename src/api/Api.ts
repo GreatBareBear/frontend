@@ -40,7 +40,9 @@ export default class Api {
     this.setApi(true)
 
     this.nebPay = new NebulasPay()
-    this.ipfs = ipfsApi('165.227.161.44')
+    this.ipfs = ipfsApi('ipfs.nufflee.com', '443', {
+      protocol: 'https'
+    })
   }
 
   async payUpload(value: BigNumber, dryRun: boolean = false): Promise<any> {
