@@ -10,5 +10,6 @@ export interface UploadImage {
   author: string
   width?: number
   height?: number
-  file: ImageFile
+  file?: ImageFile
+  id?: number
 }

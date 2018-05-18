@@ -14,6 +14,12 @@ const styles = (theme: Theme) => ({
     flex: 1
   },
   title: {
+    cursor: 'pointer',
+    paddingLeft: '10px'
+  },
+  titleIcon: {
+    width: '40px',
+    height: '50px',
     cursor: 'pointer'
   },
   appBar: {
@@ -82,15 +88,9 @@ class TopBar extends React.Component<TopBarProps> {
       <div className={classes.root}>
         <AppBar position='absolute' className={classes.appBar}>
           <Toolbar>
-            <img src={Logo} style={{
-              width: '40px',
-              height: '50px',
-              margin: '10px'
-            }}/>
+            <img src={Logo} className={classes.titleIcon} onClick={() => this.props.history.push('/')}/>
             <Typography variant='title' color='inherit' className={classNames(classes.flex)}>
-              <a className={classes.title} onClick={() => this.props.history.push('/')} style={{
-                marginLeft: '5px'
-              }}>imgCube</a>
+              <a className={classes.title} onClick={() => this.props.history.push('/')}>imgCube</a>
             </Typography>
             <MuiThemeProvider theme={endpointSelectTheme}>
               <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' disableUnderline={true} onChange={this.updateEndpoint}>
