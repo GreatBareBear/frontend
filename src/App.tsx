@@ -182,6 +182,34 @@ class App extends React.Component<AppProps, {
           <div className={classes.content}>
             <div className={classes.toolbar}/>
             <Switch>
+              <Route path='/raw/:id' render={({ match }) => {
+                if (!isNaN(match.params.id)) {
+                    const imageId = Number(match.params.id)
+                    const imageLink = 'https://i.imgur.com/UR05N.jpg' // TODO: Get the link from the id of the image.
+                    const xhr = new XMLHttpRequest()
+                    xhr.onload = () => {
+                      const reader = new FileReader()
+                      reader.onloadend = () => {
+                        document.getElementsByTagName('head')[0].innerHTML = ''
+                        document.body.innerHTML = ''
+                        document.body.style.margin = '0px'
+                        document.body.style.background = '#0e0e0e'
+                        document.body.style.display = 'flex'
+                        document.body.style.justifyContent = 'center'
+                        const image: HTMLImageElement = document.createElement('img')
+                        image.src = reader.result
+                        image.style.height = '100vh'
+                        document.body.appendChild(image)
+                      }
+                      reader.readAsDataURL(xhr.response)
+                    }
+                    xhr.open('GET', imageLink)
+                    xhr.responseType = 'blob'
+                    xhr.send()
+                    return null
+                }
+                return (<Typography variant='headline'>Invalid image id '{match.params.id}'. </Typography>)
+              }} />
               <Route exact path='/upload' component={UploadImagePage}/>
               <Route path='/category/:id' render={({ match }) => {
                 if (this.category.name !== match.params.id) {
