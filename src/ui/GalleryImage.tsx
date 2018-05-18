@@ -51,7 +51,7 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
     const { classes } = this.props
 
     return (
-      <div key={this.props.imageReference.index} className='GalleryImage' /* TODO: New info feature here*/>
+      <div key={this.props.imageReference.index} className='GalleryImage' onClick={this.props.onCardClicked}>
         <img onLoad={() => this.showImage()} onError={() => this.showImage()} src={this.props.imageReference.src} alt={this.props.imageReference.name} title={this.props.imageReference.name}/>
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>
@@ -60,11 +60,6 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
               <IconButton onClick={this.onDownloadClicked} style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
                 <Tooltip title='Download'>
                   <CloudDownload/>
-                </Tooltip>
-              </IconButton>
-              <IconButton onClick={this.props.onCardClicked} style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
-                <Tooltip title='More info'>
-                  <InfoIcon/>
                 </Tooltip>
               </IconButton>
             </React.Fragment>

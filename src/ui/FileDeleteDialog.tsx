@@ -2,6 +2,7 @@ import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, B
 import * as React from 'react'
 import { withStyles, WithStyles } from './withStyles'
 import { UploadImage } from '../models/UploadImage'
+import { pluralize } from '../utils'
 
 const styles = () => ({
   galleryImagePlaceholder: {
@@ -29,18 +30,15 @@ export default class FileDeleteDialog extends React.Component<DeleteDialogProps>
   }
 
   render() {
-    const { classes } = this.props
-
     return (
       <Dialog open={this.props.files.length > 0} onClose={() => this.handleFileDeletion(false)} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
         {this.props.files.length > 0 &&
         <React.Fragment>
-          <DialogTitle id='alert-dialog-title'>Cancel upload</DialogTitle>
+          <DialogTitle id='alert-dialog-title'>Delete selected {pluralize('image', this.props.files.length)}</DialogTitle>
           <DialogContent>
             <DialogContentText id='alert-dialog-description'>
-              This action <strong>will cancel the upload for {this.props.files.length === 1 ? 'selected image \'' + this.props.files[0].name + '\'' : this.props.files.length + ' selected images'}</strong> and <strong>cannot be undone</strong>.
-              <br/>
-              Are you sure you want to cancel the upload?
+              This <strong>will delete {this.props.files.length === 1 ? 'selected image \'' + this.props.files[0].name + '\'' : this.props.files.length + ' selected images'}</strong> from the website and <strong>cannot be undone</strong>.
+              Are you sure you want to proceed?
             </DialogContentText>
           </DialogContent>
           <DialogActions>

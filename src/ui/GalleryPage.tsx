@@ -1,4 +1,4 @@
-import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton  } from 'material-ui'
+import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton } from 'material-ui'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
@@ -38,8 +38,8 @@ const styles = (theme: Theme) => ({
   imageLightBoxDesc: {
     position: 'absolute',
     marginTop: '-120px',
-    background: 'rgba(255, 255, 255, 0.3)',
-    width: 'calc(100% - '+theme.spacing.unit * 2+'px)',
+    background: 'rgba(255, 255, 255, 0.7)',
+    width: 'calc(100% - ' + theme.spacing.unit * 2 + 'px)',
     color: 'white',
     padding: theme.spacing.unit * 2
   } as CSSProperties,
@@ -189,49 +189,49 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
     if (childElements.length === 0 && (this.loadedImagesCount === this.props.images.length) && !this.props.shouldBeLoading) {
       return (
-        <Typography className={classes.noImagesText}>No images have been uploaded in this category yet. Why don't you upload one&nbsp; <Link to='/upload'>here</Link>?</Typography>
+        <Typography className={classes.noImagesText}>No images have been uploaded in this category yet. Why don't you upload one&nbsp; <a href='/upload'>here</a>?</Typography>
       )
     }
 
     return (
       <React.Fragment>
         {(!this.props.shouldBeLoading || this.isGalleryScrollable) &&
-          <Masonry ref={(ref) => this.galleryReference = ref} elementType='div' className={this.generateGalleryClassName()}>
-            {childElements}
-          </Masonry>}
-        
-        {((this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && this.props.anyImages) && 
-          <div className='GalleryLoadingMore'>
-          {this.isGalleryScrollable ? <CircularProgress color='primary' /> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress} /> : <LinearProgress variant='indeterminate' className={classes.linearProgress} />}
-          </div>}
+        <Masonry ref={(ref) => this.galleryReference = ref} elementType='div' className={this.generateGalleryClassName()}>
+          {childElements}
+        </Masonry>}
+
+        {((this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && this.props.anyImages) &&
+        <div className='GalleryLoadingMore'>
+          {this.isGalleryScrollable ? <CircularProgress color='primary'/> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress}/> : <LinearProgress variant='indeterminate' className={classes.linearProgress}/>}
+        </div>}
         <Fade
           in={this.lightBox.isShown}
         >
           <div>
             {this.lightBox.isShown &&
-              <Modal
-                open={this.lightBox.isShown}
-                onClose={() => this.hideLightbox()}
-              >
-                <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
+            <Modal open={this.lightBox.isShown} onClose={() => this.hideLightbox()}>
+              <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
                 <IconButton className={classes.imageLightBoxCloseBtn} onClick={() => this.hideLightbox()}>
-                    <CloseIcon />
-                  </IconButton>
-                  <img src={this.lightBox.image.src} style={{ maxWidth: '700px' }} />
-                  <div className={classes.imageLightBoxDesc}>
-                    <Typography variant='headline' component='strong' style={{
-                      marginBottom: '15px'
-                    }}>
-                      {this.lightBox.image.name}
-                    </Typography>
-                    <Typography variant='subheading' style={{
-                      marginTop: '15px'
-                    }}>
-                      <strong>Created by:</strong> {this.lightBox.image.author}
-                    </Typography>
-                  </div>
-                </div>
-              </Modal> 
+                  <CloseIcon/>
+                </IconButton>
+                {
+                  this.lightBox && <React.Fragment> <img src={this.lightBox.image.src} style={{ maxWidth: '1000px' }}/>
+                    <div className={classes.imageLightBoxDesc}>
+                      <Typography variant='headline' component='strong' style={{
+                        marginBottom: '15px'
+                      }}>
+                        {this.lightBox.image.name}
+                      </Typography>
+                      <Typography variant='subheading' style={{
+                        marginTop: '15px'
+                      }}>
+                        <strong>Created by:</strong> {this.lightBox.image.author}
+                      </Typography>
+                    </div>
+                  </React.Fragment>
+                }
+              </div>
+            </Modal>
             }
           </div>
         </Fade>

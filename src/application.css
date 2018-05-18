@@ -2,6 +2,7 @@
   margin: 5px;
   max-width: 300px;
   box-sizing: border-box;
+  cursor: pointer;
 }
 
 .GalleryImage img {

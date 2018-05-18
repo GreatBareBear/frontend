@@ -82,6 +82,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
   author: string,
   showUploadDialog: boolean,
   showUploadProgress: boolean,
+  showErrorDialog: boolean,
   errorMessages: string[]
   selectedFiles: UploadImage[]
 }> {
@@ -95,6 +96,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     author: DEFAULT_AUTHOR,
     showUploadDialog: false,
     showUploadProgress: false,
+    showErrorDialog: false,
     errorMessages: [] as string[]
   }
 
@@ -187,6 +189,14 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
   handleUpload = async () => {
     if (this.state.selectedFiles.length === 0) {
+      return
+    }
+
+    if (!(window as any).webExtensionWallet) {
+      this.setState({
+        showErrorDialog: true
+      })
+
       return
     }
 
@@ -328,9 +338,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
     return (
       <React.Fragment>
-        {this.state.files.length > 0 &&
-        <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
-        }
+        {this.state.files.length > 0 && <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>}
         <Typography variant='subheading' className={classes.yourImages}>
           Your images{this.state.files.length > 0 ? ` (${this.state.files.length}, ${this.state.selectedFiles.length} selected)` : ''}:
           <Button variant='raised' className={classes.uploadButton} color='primary' onClick={this.handleUpload}>
@@ -397,7 +405,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
               </React.Fragment>
               :
               <React.Fragment>
-                <DialogTitle>Upload image(s)</DialogTitle>
+                <DialogTitle>Upload {pluralize('image', this.state.selectedFiles.length)}</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
                     Are you sure you want to upload {this.state.selectedFiles.length} {pluralize('image', this.state.selectedFiles.length)} for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?<br/><br/>
@@ -410,6 +418,25 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
                   </Button>
                   <Button onClick={() => this.upload()} color='primary'>
                     Yes
+                  </Button>
+                </DialogActions>
+              </React.Fragment>
+          }
+        </Dialog>
+
+        <Dialog open={this.state.showErrorDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
+          {
+            this.state.showErrorDialog &&
+              <React.Fragment>
+                <DialogTitle>Nebulas Web Extension Wallet is not installed</DialogTitle>
+                <DialogContent>
+                  <Typography>
+                    Nebulas Web Extension Wallet is not installed and the upload will not continue. To install the wallet extension, follow the instructions <a href='https://github.com/ChengOrangeJu/WebExtensionWallet#webextensionwallet' target='_blank'>here</a>. After you've installed the wallet, try uploading again.
+                  </Typography>
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => this.setState({ showErrorDialog: false })} color='primary' autoFocus>
+                    Close
                   </Button>
                 </DialogActions>
               </React.Fragment>
