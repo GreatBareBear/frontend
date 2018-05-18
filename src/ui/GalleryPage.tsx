@@ -6,7 +6,6 @@ import Masonry from 'react-masonry-component'
 import GalleryImage from './GalleryImage'
 import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
-import { Link } from 'react-router-dom'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import CloseIcon from '@material-ui/icons/Close'
 import { Fade } from 'material-ui'
@@ -37,10 +36,10 @@ const styles = (theme: Theme) => ({
   } as CSSProperties,
   imageLightBoxDesc: {
     position: 'absolute',
-    marginTop: '-120px',
-    background: 'rgba(255, 255, 255, 0.7)',
+    background: 'rgba(0, 0, 0, 0.4)',
     width: 'calc(100% - ' + theme.spacing.unit * 2 + 'px)',
     color: 'white',
+    marginTop: '-107px',
     padding: theme.spacing.unit * 2
   } as CSSProperties,
   imageLightBoxCloseBtn: {
@@ -218,12 +217,14 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
                   this.lightBox && <React.Fragment> <img src={this.lightBox.image.src} style={{ maxWidth: '1000px' }}/>
                     <div className={classes.imageLightBoxDesc}>
                       <Typography variant='headline' component='strong' style={{
-                        marginBottom: '15px'
+                        marginBottom: '15px',
+                        color: 'white'
                       }}>
                         {this.lightBox.image.name}
                       </Typography>
                       <Typography variant='subheading' style={{
-                        marginTop: '15px'
+                        marginTop: '15px',
+                        color: 'white'
                       }}>
                         <strong>Created by:</strong> {this.lightBox.image.author}
                       </Typography>

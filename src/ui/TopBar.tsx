@@ -7,7 +7,7 @@ import { RouteComponentProps, withRouter } from 'react-router-dom'
 import { WithStyles, withStyles } from './withStyles'
 import { withApi } from '../api/withApi'
 import Api from '../api/Api'
-import * as Logo from '../assets/Logo.png'
+import * as Logo from '../assets/Logo.svg'
 
 const styles = (theme: Theme) => ({
   flex: {
@@ -83,13 +83,13 @@ class TopBar extends React.Component<TopBarProps> {
         <AppBar position='absolute' className={classes.appBar}>
           <Toolbar>
             <img src={Logo} style={{
-              width: '48px',
-              height: '58px',
-              margin: '7px'
+              width: '40px',
+              height: '50px',
+              margin: '10px'
             }}/>
             <Typography variant='title' color='inherit' className={classNames(classes.flex)}>
               <a className={classes.title} onClick={() => this.props.history.push('/')} style={{
-                marginLeft: '15px'
+                marginLeft: '5px'
               }}>imgCube</a>
             </Typography>
             <MuiThemeProvider theme={endpointSelectTheme}>
