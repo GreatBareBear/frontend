@@ -379,7 +379,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 
     return (
       <div>
-        <Prompt when={this.state.files.length>0} message={routeChangeMessage}/>
+        <Prompt when={this.state.files.length > 0} message={routeChangeMessage}/>
         <Typography variant='title'>
           Upload new image
         </Typography>

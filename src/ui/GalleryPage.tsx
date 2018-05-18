@@ -201,11 +201,9 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
         {((this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && this.props.anyImages) &&
         <div className='GalleryLoadingMore'>
-          {this.isGalleryScrollable ? <CircularProgress color='primary'/> : this.loadedImagesCount > 0 ? <LinearProgress variant='determinate' value={this.imagesLoadedPercent} className={classes.linearProgress}/> : <LinearProgress variant='indeterminate' className={classes.linearProgress}/>}
+          {this.isGalleryScrollable ? <CircularProgress color='primary'/> : <LinearProgress variant='indeterminate' className={classes.linearProgress}/>}
         </div>}
-        <Fade
-          in={this.lightBox.isShown}
-        >
+        <Fade in={this.lightBox.isShown}>
           <div>
             {this.lightBox.isShown &&
             <Modal open={this.lightBox.isShown} onClose={() => this.hideLightbox()}>

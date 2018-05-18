@@ -7,6 +7,7 @@ import Account from '../nebulify/Account'
 import { UploadImage } from '../models/UploadImage'
 
 export const testnetContractAddress = 'n1kVrAU1s9m862DZcJm2Bkf3hcUB627rvuL'
+export const mainnetContractAddress = testnetContractAddress // TODO: Change this
 export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
 
 export type CallResult = NebulasCallResult & {
@@ -26,6 +27,7 @@ export default class Api {
 
   private nebulas: Nebulas
   private nebPay: NebPay
+  private contractAddress: string
 
   get chainId() {
     return this.isTestnet ? 1001 : 100 // TODO: 1 might not be mainnet
@@ -90,14 +92,14 @@ export default class Api {
       const callbackUrl = this.isTestnet ? NebulasPay.config.testnetUrl : NebulasPay.config.mainnetUrl
 
       if (dryRun) {
-        this.nebPay.simulateCall(testnetContractAddress, value.toString(), functionName, args, {
+        this.nebPay.simulateCall(this.contractAddress, value.toString(), functionName, args, {
           listener: (response) => {
             resolve(response)
           },
           callback: callbackUrl
         })
       } else {
-        const serialNumber = this.nebPay.call(testnetContractAddress, value.toString(), functionName, args, {
+        const serialNumber = this.nebPay.call(this.contractAddress, value.toString(), functionName, args, {
           listener: (response: any) => {
             if (typeof response  === 'string') {
               resolve({
@@ -128,7 +130,7 @@ export default class Api {
 
       this.nebulas.api.call({
         from: imgCubeAccount.getAddress(),
-        to: testnetContractAddress,
+        to: this.contractAddress,
         value: value.toString(),
         nonce,
         gasPrice: 1000000,
@@ -140,6 +142,7 @@ export default class Api {
 
   setApi(testnet: boolean) {
     this.isTestnet = testnet
+    this.contractAddress = this.isTestnet ? testnetContractAddress : mainnetContractAddress
 
     this.nebulas.setApi({
       mainnet: !testnet,
