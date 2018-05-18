@@ -1,12 +1,14 @@
 export const categories: string[] = [
   'all',
-  'cats',
+  'crypto',
   'dogs',
+  'cute',
   'memes',
-  'burgers',
-  'cartoons',
-  'fun',
+  'programming',
+  'games',
+  'cars',
   'art',
+  'fun',
   'other'
 ]
 

@@ -15,6 +15,7 @@ import Api from '../api/Api'
 import { calculateImagePrice, getImageData } from '../models/Image'
 import { red } from 'material-ui/colors'
 import { pluralize } from '../utils'
+import { Prompt, RouteComponentProps, RouterProps, withRouter } from 'react-router'
 
 const styles = (theme: Theme) => ({
   dropZone: {
@@ -66,14 +67,16 @@ const styles = (theme: Theme) => ({
 
 export const DEFAULT_AUTHOR = 'Mr. Anomynous'
 
-type UploadImagePageProps = WithStyles & {
+const routeChangeMessage = 'You have unsaved changes. Are you sure you want to leave?'
+
+type UploadImagePageProps = WithStyles & RouteComponentProps<{}> & {
   api: Api
 }
 
 @withStyles(styles)
 @withApi()
 @observer
-export default class UploadImagePage extends React.Component<UploadImagePageProps, {
+class UploadImagePage extends React.Component<UploadImagePageProps, {
   files: UploadImage[],
   filesToRemove: UploadImage[]
   price: BigNumber,
@@ -100,7 +103,15 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     errorMessages: [] as string[]
   }
 
-  async componentDidUpdate() {
+  componentDidMount() {
+    window.addEventListener('beforeunload', this.onRouteChange)
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener('beforeunload', this.onRouteChange)
+  }
+
+  async componentDidUpdate(nextProps) {
     if (this.state.updated === false) {
       return
     }
@@ -151,10 +162,13 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     })
   }
 
-  deselectFiles(files: UploadImage[]) {
-    let { selectedFiles } = this.state
-    selectedFiles = selectedFiles.filter((value: UploadImage) => !files.includes(value))
-    this.setState({ selectedFiles })
+  onRouteChange = (event) => {
+    if (this.state.files.length > 0) {
+
+      (event || window.event).returnValue = routeChangeMessage
+
+      return routeChangeMessage
+    }
   }
 
   removeFiles(shouldRemoveFiles: boolean, filesToRemoveArray: UploadImage[]) {
@@ -365,6 +379,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
 
     return (
       <div>
+        <Prompt when={this.state.files.length>0} message={routeChangeMessage}/>
         <Typography variant='title'>
           Upload new image
         </Typography>
@@ -376,7 +391,7 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
             </Typography>
           </div>
         </Dropzone>
-        {this.state.errorMessages.map((errorMessage: string, index: number) => {
+        {this.state.errorMessages.map((errorMessage: string) => {
           return (
             <Typography variant='body1' component='p' className={classes.errorText}>
               <strong>Error: </strong>{errorMessage}
@@ -427,19 +442,19 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
         <Dialog open={this.state.showErrorDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
           {
             this.state.showErrorDialog &&
-              <React.Fragment>
-                <DialogTitle>Nebulas Web Extension Wallet is not installed</DialogTitle>
-                <DialogContent>
-                  <Typography>
-                    Nebulas Web Extension Wallet is not installed and the upload will not continue. To install the wallet extension, follow the instructions <a href='https://github.com/ChengOrangeJu/WebExtensionWallet#webextensionwallet' target='_blank'>here</a>. After you've installed the wallet, try uploading again.
-                  </Typography>
-                </DialogContent>
-                <DialogActions>
-                  <Button onClick={() => this.setState({ showErrorDialog: false })} color='primary' autoFocus>
-                    Close
-                  </Button>
-                </DialogActions>
-              </React.Fragment>
+            <React.Fragment>
+              <DialogTitle>Nebulas Web Extension Wallet is not installed</DialogTitle>
+              <DialogContent>
+                <Typography>
+                  Nebulas Web Extension Wallet is not installed and the upload will not continue. To install the wallet extension, follow the instructions <a href='https://github.com/ChengOrangeJu/WebExtensionWallet#webextensionwallet' target='_blank'>here</a>. After you've installed the wallet, try uploading again.
+                </Typography>
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => this.setState({ showErrorDialog: false })} color='primary' autoFocus>
+                  Close
+                </Button>
+              </DialogActions>
+            </React.Fragment>
           }
         </Dialog>
         <br/>
@@ -449,3 +464,5 @@ export default class UploadImagePage extends React.Component<UploadImagePageProp
     )
   }
 }
+
+export default withRouter(UploadImagePage)

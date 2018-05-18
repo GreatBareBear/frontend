@@ -7,6 +7,7 @@ import { WithStyles, withStyles } from './withStyles'
 import { UploadImage } from '../models/UploadImage'
 import { calculateImagePrice, getImageData } from '../models/Image'
 import BigNumber from 'bignumber.js'
+import * as _ from 'lodash'
 
 const styles = (theme: Theme) => ({
   categoryPicker: {
@@ -131,7 +132,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
               id: 'categoryPicker'
             }}>
               {categories.slice(1).map((category: string, categoryIndex: number) => (
-                <MenuItem value={category} key={categoryIndex}>{category}</MenuItem>
+                <MenuItem value={_.startCase(category)} key={categoryIndex}>{_.startCase(category)}</MenuItem>
               ))}
             </Select>
           </FormControl>
