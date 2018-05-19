@@ -34,14 +34,14 @@ export function pluralize(word: string, count: number) {
 
 export function fallbackCopyTextToClipboard(text) {
   const textArea = document.createElement('textarea')
+
   textArea.value = text
   document.body.appendChild(textArea)
   textArea.focus()
   textArea.select()
 
   try {
-    const successful = document.execCommand('copy')
-    const msg = successful ? 'successful' : 'unsuccessful'
+    document.execCommand('copy')
   } catch (err) {
   }
 
