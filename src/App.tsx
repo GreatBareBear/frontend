@@ -1,4 +1,4 @@
-import { createMuiTheme, CssBaseline, Drawer, ListItem, ListItemText, ListSubheader, MuiThemeProvider, Typography } from 'material-ui'
+import { createMuiTheme, CssBaseline, Drawer, ListItem, ListItemText, ListSubheader, MuiThemeProvider, Typography, Dialog, DialogTitle, DialogContent, Button, DialogActions } from 'material-ui'
 import { Theme } from 'material-ui/styles/'
 import { CSSProperties } from 'material-ui/styles/withStyles'
 import * as React from 'react'
@@ -66,7 +66,8 @@ type AppProps = WithStyles & RouteComponentProps<{}> & {
 class App extends React.Component<AppProps, {
   images: Image[],
   galleryShouldBeLoading: boolean,
-  anyImages: boolean
+  anyImages: boolean,
+  tosDialogOpened: boolean
 }> {
   category = {
     name: categories[0],
@@ -76,7 +77,8 @@ class App extends React.Component<AppProps, {
   state = {
     images: [] as Image[],
     galleryShouldBeLoading: false,
-    anyImages: true
+    anyImages: true,
+    tosDialogOpened: false
   }
 
   constructor(props: any) {
@@ -163,6 +165,31 @@ class App extends React.Component<AppProps, {
     this.updateImageList()
   }
 
+  renderToSDialog() {
+    const firstTimeUsage = localStorage.getItem('firstSiteUsage')
+    if (firstTimeUsage === null) {
+      this.state.tosDialogOpened = true
+      return (
+        <Dialog open={this.state.tosDialogOpened} onClose={() => {localStorage.setItem('firstSiteUsage', 'true'); this.setState({ tosDialogOpened: false })}}>
+          <React.Fragment>
+            <DialogTitle>Terms of Service</DialogTitle>
+            <DialogContent>
+              <Typography>
+                Some VEWY IMPORTANT ToS.
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => {localStorage.setItem('firstSiteUsage', 'true'); this.setState({ tosDialogOpened: false })}} color='primary' autoFocus>
+                I agree to the Terms of Service
+              </Button>
+            </DialogActions>
+          </React.Fragment>
+        </Dialog>
+      )
+    }
+    return null
+  }
+
   render() {
     const { classes } = this.props
 
@@ -171,42 +198,42 @@ class App extends React.Component<AppProps, {
         <div className={classes.root}>
           <CssBaseline/>
           <TopBar onEndpointChange={this.updateEndpoint}/>
-          <Drawer variant='permanent' classes={{
-            paper: classes.drawerPaper
-          }}>
+          <Drawer variant='permanent' classes={{ paper: classes.drawerPaper }}>
             <div className={classes.toolbar}/>
             <ListSubheader component='div'>Categories</ListSubheader>
             {this.renderCategoryButtons()}
             <ListSubheader component='div' disableSticky={true} className={classes.versionText}>imgCube Web v1.0</ListSubheader>
           </Drawer>
+          {this.renderToSDialog()}
           <div className={classes.content}>
             <div className={classes.toolbar}/>
             <Switch>
               <Route path='/raw/:id' render={({ match }) => {
                 if (!isNaN(match.params.id)) {
                     const imageId = Number(match.params.id)
-                    const imageLink = 'https://i.imgur.com/UR05N.jpg' // TODO: Get the link from the id of the image.
-                    const xhr = new XMLHttpRequest()
-                    xhr.onload = () => {
-                      const reader = new FileReader()
-                      reader.onloadend = () => {
-                        document.getElementsByTagName('head')[0].innerHTML = ''
-                        document.body.innerHTML = ''
-                        document.body.style.margin = '0px'
-                        document.body.style.background = '#0e0e0e'
-                        document.body.style.display = 'flex'
-                        document.body.style.justifyContent = 'center'
-                        const image: HTMLImageElement = document.createElement('img')
-                        image.src = reader.result
-                        image.style.height = '100vh'
-                        document.body.appendChild(image)
+                    this.props.api.query(2, imageId, 'all', new BigNumber(0)).then((result) => {
+                      if (result.length > 0) {
+                        this.props.api.ipfs.get(result[0].url).then((files, error) => {
+                          if (error) {
+                            console.error(error)
+                            return
+                          }
+                          document.getElementsByTagName('head')[0].innerHTML = ''
+                          document.body.innerHTML = ''
+                          document.body.style.margin = '0px'
+                          document.body.style.background = '#0e0e0e'
+                          document.body.style.display = 'flex'
+                          document.body.style.justifyContent = 'center'
+                          const image: HTMLImageElement = document.createElement('img')
+                          image.src = files[0].content.toString('utf8')
+                          image.style.height = '100vh'
+                          document.body.appendChild(image)
+                        })
+                      } else {
+                        return (<Typography variant='headline'>Image with id {match.params.id} doesn't exist.</Typography>)
                       }
-                      reader.readAsDataURL(xhr.response)
-                    }
-                    xhr.open('GET', imageLink)
-                    xhr.responseType = 'blob'
-                    xhr.send()
-                    return null
+                    })
+                    
                 }
                 return (<Typography variant='headline'>Invalid image id '{match.params.id}'. </Typography>)
               }} />

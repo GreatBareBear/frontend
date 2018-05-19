@@ -212,7 +212,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
                   <CloseIcon/>
                 </IconButton>
                 {
-                  this.lightBox && <React.Fragment> <img src={this.lightBox.image.src} style={{ maxWidth: '1000px' }}/>
+                  this.lightBox.image !== undefined && <React.Fragment> <img src={this.lightBox.image.src} style={{ maxWidth: '1000px' }}/>
                     <div className={classes.imageLightBoxDesc}>
                       <Typography variant='headline' component='strong' style={{
                         marginBottom: '15px',
