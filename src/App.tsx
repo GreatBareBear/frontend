@@ -189,6 +189,8 @@ class App extends React.Component<AppProps, {
     }
     return null
   }
+  
+  rawStatus = -2
 
   render() {
     const { classes } = this.props
@@ -209,15 +211,18 @@ class App extends React.Component<AppProps, {
             <div className={classes.toolbar}/>
             <Switch>
               <Route path='/raw/:id' render={({ match }) => {
-                if (!isNaN(match.params.id)) {
+                if (!isNaN(match.params.id) && this.rawStatus === -2) {
                     const imageId = Number(match.params.id)
-                    this.props.api.query(2, imageId, 'all', new BigNumber(0)).then((result) => {
+                    this.rawStatus = -1
+                    this.props.api.query(imageId + 2, imageId + 1, 'all', new BigNumber(0)).then((result) => {
                       if (result.length > 0) {
                         this.props.api.ipfs.get(result[0].url).then((files, error) => {
                           if (error) {
                             console.error(error)
+                            this.rawStatus = 1
                             return
                           }
+                          this.rawStatus = 0
                           document.getElementsByTagName('head')[0].innerHTML = ''
                           document.body.innerHTML = ''
                           document.body.style.margin = '0px'
@@ -230,12 +235,24 @@ class App extends React.Component<AppProps, {
                           document.body.appendChild(image)
                         })
                       } else {
-                        return (<Typography variant='headline'>Image with id {match.params.id} doesn't exist.</Typography>)
+                        if (this.rawStatus !== 1) {
+                          alert('Image with id "'+imageId+'" doesn\'t exist.')
+                          this.rawStatus = 1
+                        }
                       }
                     })
-                    
+                    return (<Typography variant='headline'>Generating image {match.params.id}... </Typography>)
                 }
-                return (<Typography variant='headline'>Invalid image id '{match.params.id}'. </Typography>)
+                if (this.rawStatus === 1) {
+                  return (<Typography variant='headline'>Image with id '{match.params.id}' doesn't exist. </Typography>)
+                } else if (this.rawStatus === -2) {
+                  return (<Typography variant='headline'>Invalid image id '{match.params.id}'. </Typography>)
+                } else if (this.rawStatus === -1) {
+                  return (<Typography variant='headline'>Fetching Nebulas data for image {match.params.id}... </Typography>)
+                } else {
+                  return null
+                }
+                
               }} />
               <Route exact path='/upload' component={UploadImagePage}/>
               <Route path='/category/:id' render={({ match }) => {

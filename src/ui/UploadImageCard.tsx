@@ -50,7 +50,8 @@ type UploadedImageCardProps = WithStyles & {
   index: number,
   isSelected: boolean,
   removeFileCallback: (index: number) => void,
-  selectFileCallback: (isSelected: boolean) => void
+  selectFileCallback: (isSelected: boolean) => void,
+  uploadFileCallback: () => void
 }
 
 @withStyles(styles)
@@ -142,7 +143,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
           <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
             Delete
           </Button>
-          <Button size='small' color='primary'>
+          <Button size='small' color='primary' onClick={() => this.props.uploadFileCallback()}>
             Upload
           </Button>
         </CardActions>

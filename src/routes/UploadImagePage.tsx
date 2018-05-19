@@ -125,7 +125,6 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
   }
 
   onRouteChange = (event) => {
-    console.log('test')
     if (this.state.files.length > 0) {
       (event || window.event).returnValue = routeChangeMessage
       return routeChangeMessage
@@ -143,8 +142,12 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
         updated: false
       })
     }
- 
-    for (const [index, file] of this.state.selectedFiles.entries()) {
+    this.calculatePrices('selectedFiles')
+  }
+
+  async calculatePrices(calculateType: string) {
+    const files = calculateType === 'selectedFiles' ? this.state.selectedFiles : this.filesToUpload
+    for (const [index, file] of files.entries()) {
       const data = await getImageData(file)
 
       fetch('https://api.coinmarketcap.com/v2/ticker/1908/').then((response: any) => {
@@ -259,6 +262,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 
     if (errorMessages.length === 0) {
       this.filesToUpload = images
+      this.calculatePrices('filesToUpload')
       this.setState({
         showUploadDialog: true
       })
@@ -403,7 +407,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
             </Typography>
             <Masonry elementType={'div'}>
               {this.state.files.map((file: UploadImage, index: number) => {
-                return (<UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])} />)
+                return (<UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} uploadFileCallback={() => this.handleUpload([file])} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])} />)
               })}
             </Masonry>
           </div>
@@ -497,15 +501,15 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
               </React.Fragment>
               :
               <React.Fragment>
-                  <DialogTitle>Upload {pluralize('image', this.state.selectedFiles.length)}</DialogTitle>
+                  <DialogTitle>Upload {pluralize('image', this.filesToUpload.length)}</DialogTitle>
                   <DialogContent>
                     <DialogContentText>
-                      Are you sure you want to upload {this.state.selectedFiles.length} {pluralize('image', this.state.selectedFiles.length)} for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?<br /><br />
+                      Are you sure you want to upload {this.filesToUpload.length} {pluralize('image', this.filesToUpload.length)} for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?<br /><br />
                       Note: you will be prompted with two transactions and that is intended. The first transaction will send NAS to the contract and the second will upload your image(s). You need to confirm both for the upload to succeed. If you don't actually want to upload the images, just reject the first or the second transaction and all NAS will be returned to your account (excluding the gas fees).
                   </DialogContentText>
                   </DialogContent>
                   <DialogActions>
-                    <Button onClick={() => this.setState({ showUploadDialog: false })} color='secondary' autoFocus>
+                    <Button onClick={() => {this.calculatePrices('selectedFiles'); this.setState({ showUploadDialog: false })}} color='secondary' autoFocus>
                       No
                   </Button>
                     <Button onClick={() => this.upload()} color='primary'>
