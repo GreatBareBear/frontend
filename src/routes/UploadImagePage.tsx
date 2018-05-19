@@ -68,7 +68,7 @@ const styles = (theme: Theme) => ({
 
 export const DEFAULT_AUTHOR = 'Mr. Anomynous'
 
-const routeChangeMessage = 'You have unsaved changes. Are you sure you want to leave?' 
+const routeChangeMessage = 'You have unsaved changes. Are you sure you want to leave?'
 export const snackBarMessages = {
   noImagesSelected: 'No images selected.',
   linkCopyActionSuccess: 'Image link copied!'
@@ -113,16 +113,16 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
     defaultSnackbarShown: false,
     snackBarMessage: snackBarMessages.noImagesSelected
   }
- 
-  filesToUpload = [] as UploadImage[]
- 
-  componentDidMount() {
-    window.addEventListener('beforeunload', this.onRouteChange)
-  }
 
-  componentWillUnmount() {
-    window.removeEventListener('beforeunload', this.onRouteChange)
-  }
+  filesToUpload = [] as UploadImage[]
+
+  /*  componentDidMount() {
+      window.addEventListener('beforeunload', this.onRouteChange)
+    }
+
+    componentWillUnmount() {
+      window.removeEventListener('beforeunload', this.onRouteChange)
+    }*/
 
   onRouteChange = (event) => {
     if (this.state.files.length > 0) {
@@ -282,7 +282,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
       price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
     }
 
-    this.props.api.payUpload(price, true).then(async (response) => {
+    this.props.api.payUpload(price).then(async (response) => {
       if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
         this.filesToUpload = []
         this.setState({
@@ -323,7 +323,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
           if (result.data.status === 1) {
             clearInterval(timer)
 
-            this.props.api.upload(selectedFiles, true).then((response: any) => {
+            this.props.api.upload(selectedFiles).then((response: any) => {
               if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
                 this.props.api.returnPaidUpload()
                 this.filesToUpload = []
@@ -356,7 +356,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
                 })
               }
             })
-           }
+          }
         }, 10100)
       })
     })
@@ -393,24 +393,24 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
     return (
       <React.Fragment>
         {this.state.files.length > 0 &&
-          <div>
-            <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal' />
-            <Typography variant='subheading' className={classes.yourImages}>
-              Your images{this.state.files.length > 0 ? ` (${this.state.selectedFiles.length} out of ${this.state.files.length} selected)` : ''}:
-              <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.handleUpload()}>
-                {this.state.selectedFiles.length > 1 ? 'Upload all' : 'Upload'}
-              </Button>
-              <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.selectedFiles)}>
-                {this.state.selectedFiles.length > 1 ? 'Delete all' : 'Delete'}
-              </Button>
-              {!this.state.price.eq(new BigNumber(0)) && !this.state.usdPrice.eq(new BigNumber(0)) && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
-            </Typography>
-            <Masonry elementType={'div'}>
-              {this.state.files.map((file: UploadImage, index: number) => {
-                return (<UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} uploadFileCallback={() => this.handleUpload([file])} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])} />)
-              })}
-            </Masonry>
-          </div>
+        <div>
+          <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
+          <Typography variant='subheading' className={classes.yourImages}>
+            Your images{this.state.files.length > 0 ? ` (${this.state.selectedFiles.length} out of ${this.state.files.length} selected)` : ''}:
+            <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.handleUpload()}>
+              {this.state.selectedFiles.length > 1 ? 'Upload all' : 'Upload'}
+            </Button>
+            <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.selectedFiles)}>
+              {this.state.selectedFiles.length > 1 ? 'Delete all' : 'Delete'}
+            </Button>
+            {!this.state.price.eq(new BigNumber(0)) && !this.state.usdPrice.eq(new BigNumber(0)) && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
+          </Typography>
+          <Masonry elementType={'div'}>
+            {this.state.files.map((file: UploadImage, index: number) => {
+              return (<UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} uploadFileCallback={() => this.handleUpload([file])} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])}/>)
+            })}
+          </Masonry>
+        </div>
         }
       </React.Fragment>
     )
@@ -421,13 +421,13 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 
     return (
       <div>
-        <Prompt when={this.state.files.length > 0} message={routeChangeMessage} /> 
+        <Prompt when={this.state.files.length > 0} message={routeChangeMessage}/>
         <Typography variant='title'>
           Upload new image
         </Typography>
         <Dropzone className={classes.dropZone} accept={'image/png,image/jpeg,image/bmp'} onDrop={this.onDrop}>
           <div className={classes.dropZoneContent}>
-            <FileUpload className={classes.uploadIcon} />
+            <FileUpload className={classes.uploadIcon}/>
             <Typography variant='headline'>
               Drop images you want to upload or click here to open a file dialog.
             </Typography>
@@ -443,81 +443,87 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 
         <Dialog disableBackdropClick={true} disableEscapeKeyDown={true} open={this.state.showUploadDialog}>
           {this.state.showUploadDialog &&
-            (this.state.showUploadFinished ?
+          (this.state.showUploadFinished ?
               <React.Fragment>
-                <DialogTitle>Upload completed</DialogTitle>
+                <DialogTitle>Upload complet</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
-                    Uploading process has completed successfully. You can see uploaded images below.
-                    </DialogContentText>
-                  <br />
+                    Upload completed successfully. You can see images you uploaded below. (If the images don't show up immediately, you might need to refresh the page.)
+                  </DialogContentText>
+                  <br/>
                   <Masonry elementType='div'>
                     {this.state.selectedFiles.map((value: UploadImage, index: number) => {
                       return (
                         <div key={index} style={{ maxWidth: '260px', minWidth: '220px', boxSizing: 'border-box' }}>
-                          <img style={{ width: '100%' }} src={value.base64} />
+                          <img style={{ width: '100%' }} src={value.base64}/>
                           <div>
                             <GridListTileBar style={{ bottom: '5px' }} title={value.name} subtitle={<span>By: {value.author}</span>} actionIcon={
                               <React.Fragment>
                                 <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => downloadImage(value.name, value.base64, value.type)}>
-                                <Tooltip title='Download'>
-                                  <CloudDownload />
-                                </Tooltip>
-                              </IconButton>
-                              <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => { copyTextToClipboard('https://imgcube.github.io/raw/' + value.id); this.setState({ defaultSnackbarShown: true, snackBarMessage: snackBarMessages.linkCopyActionSuccess }) }}>
-                                <Tooltip title='Copy link'>
-                                  <SvgIcon>
-                                    <path fill='none' d='M0 0h24v24H0z' />
-                                    <path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm-1 4l6 6v10c0 1.1-.9 2-2 2H7.99C6.89 23 6 22.1 6 21l.01-14c0-1.1.89-2 1.99-2h7zm-1 7h5.5L14 6.5V12z' />
-                                  </SvgIcon>
-                                </Tooltip>
-                              </IconButton>
-                            </React.Fragment>
-                          } />
+                                  <Tooltip title='Download'>
+                                    <CloudDownload/>
+                                  </Tooltip>
+                                </IconButton>
+                                <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => {
+                                  copyTextToClipboard('https://imgcube.github.io/raw/' + value.id)
+                                  this.setState({ defaultSnackbarShown: true, snackBarMessage: snackBarMessages.linkCopyActionSuccess })
+                                }}>
+                                  <Tooltip title='Copy link'>
+                                    <SvgIcon>
+                                      <path fill='none' d='M0 0h24v24H0z'/>
+                                      <path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm-1 4l6 6v10c0 1.1-.9 2-2 2H7.99C6.89 23 6 22.1 6 21l.01-14c0-1.1.89-2 1.99-2h7zm-1 7h5.5L14 6.5V12z'/>
+                                    </SvgIcon>
+                                  </Tooltip>
+                                </IconButton>
+                              </React.Fragment>
+                            }/>
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </Masonry>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => this.closeUploadFinishedDialog()} color='primary'>
-                  CLOSE
-                    </Button>
-              </DialogActions>
-            </React.Fragment>
-            : this.state.showUploadProgress ?
-              <React.Fragment>
-                <DialogTitle>Uploading...</DialogTitle>
-                <DialogContent style={{
-                  flex: 1,
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  flexDirection: 'row'
-                }}>
-                  <CircularProgress />
+                      )
+                    })}
+                  </Masonry>
                 </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => this.closeUploadFinishedDialog()} color='primary'>
+                    CLOSE
+                  </Button>
+                </DialogActions>
               </React.Fragment>
-              :
-              <React.Fragment>
+              : this.state.showUploadProgress ?
+                <React.Fragment>
+                  <DialogTitle>Uploading...</DialogTitle>
+                  <DialogContent style={{
+                    flex: 1,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    flexDirection: 'row'
+                  }}>
+                    <CircularProgress/>
+                  </DialogContent>
+                </React.Fragment>
+                :
+                <React.Fragment>
                   <DialogTitle>Upload {pluralize('image', this.filesToUpload.length)}</DialogTitle>
                   <DialogContent>
                     <DialogContentText>
-                      Are you sure you want to upload {this.filesToUpload.length} {pluralize('image', this.filesToUpload.length)} for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?<br /><br />
+                      Are you sure you want to upload {this.filesToUpload.length} {pluralize('image', this.filesToUpload.length)} for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?<br/><br/>
                       Note: you will be prompted with two transactions and that is intended. The first transaction will send NAS to the contract and the second will upload your image(s). You need to confirm both for the upload to succeed. If you don't actually want to upload the images, just reject the first or the second transaction and all NAS will be returned to your account (excluding the gas fees).
-                  </DialogContentText>
+                    </DialogContentText>
                   </DialogContent>
                   <DialogActions>
-                    <Button onClick={() => {this.calculatePrices('selectedFiles'); this.setState({ showUploadDialog: false })}} color='secondary' autoFocus>
+                    <Button onClick={() => {
+                      this.calculatePrices('selectedFiles')
+                      this.setState({ showUploadDialog: false })
+                    }} color='secondary' autoFocus>
                       No
-                  </Button>
+                    </Button>
                     <Button onClick={() => this.upload()} color='primary'>
                       Yes
-                  </Button>
+                    </Button>
                   </DialogActions>
                 </React.Fragment>
-            )}
+          )}
         </Dialog>
 
         <Dialog open={this.state.showErrorDialog} aria-labelledby='alert-dialog-title' aria-describedby='alert-dialog-description'>
@@ -538,9 +544,9 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
             </React.Fragment>
           }
         </Dialog>
-        <br />
+        <br/>
         {this.renderMasonry()}
-        <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)} />
+        <FileDeleteDialog files={this.state.filesToRemove} deleteFilesCallback={(shouldRemoveFiles, files) => this.removeFiles(shouldRemoveFiles, files)}/>
         <Snackbar
           open={this.state.defaultSnackbarShown}
           onClose={() => this.setState({ defaultSnackbarShown: false })}
@@ -554,7 +560,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
               className={classes.close}
               onClick={() => this.setState({ defaultSnackbarShown: false })}
             >
-              <CloseIcon />
+              <CloseIcon/>
             </IconButton>
           }
         />
@@ -564,7 +570,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 }
 
 function TransitionUp(props) {
-  return <Slide {...props} direction='up' />
+  return <Slide {...props} direction='up'/>
 }
 
 export default withRouter(UploadImagePage)

@@ -57,6 +57,8 @@ const theme = createMuiTheme({
   }
 })
 
+const firstUsageKey = 'firstUsage'
+
 type AppProps = WithStyles & RouteComponentProps<{}> & {
   api: Api
 }
@@ -166,9 +168,9 @@ class App extends React.Component<AppProps, {
   }
 
   renderToSDialog() {
-    const firstTimeUsage = localStorage.getItem('firstSiteUsage')
+    const firstTimeUsage = localStorage.getItem(firstUsageKey)
 
-    if (firstTimeUsage) {
+    if (!firstTimeUsage) {
       this.state.tosDialogOpened = true
       return (
         <Dialog open={this.state.tosDialogOpened}>
@@ -176,6 +178,7 @@ class App extends React.Component<AppProps, {
             <DialogTitle>Terms of Service and Privacy Policy</DialogTitle>
             <DialogContent>
               <Typography>
+                <h2>Terms of Service</h2>
                 <h3>1. Terms</h3>
                 <p>By accessing the website at <a href='https://imgcube.github.io'>https://imgcube.github.io</a>, you are agreeing to be bound by these terms of service, all applicable laws and regulations, and agree that you are responsible for compliance with any applicable local laws. If you do not agree with any of these terms, you are prohibited from using or accessing this site. The materials contained in this website are protected by applicable copyright and trademark law.</p>
                 <h3>2. Use License</h3>
@@ -212,7 +215,7 @@ class App extends React.Component<AppProps, {
             </DialogContent>
             <DialogActions>
               <Button onClick={() => {
-                localStorage.setItem('firstSiteUsage', 'true')
+                localStorage.setItem(firstUsageKey, 'true')
                 this.setState({ tosDialogOpened: false })
               }} color='primary' autoFocus>
                 I agree to the Terms of Service and the Privacy Policy
