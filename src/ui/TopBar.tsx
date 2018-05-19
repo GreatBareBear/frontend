@@ -1,7 +1,7 @@
 import FileUpload from '@material-ui/icons/FileUpload'
 import classNames = require('classnames')
-import { AppBar, Button, Toolbar, Typography, Select, MenuItem, MuiThemeProvider, createMuiTheme } from 'material-ui'
-import { Theme } from 'material-ui/styles/'
+import { AppBar, Button, Toolbar, Typography, Select, MenuItem, MuiThemeProvider, createMuiTheme } from '@material-ui/core'
+import { Theme } from '@material-ui/core/styles/'
 import * as React from 'react'
 import { RouteComponentProps, withRouter } from 'react-router-dom'
 import { WithStyles, withStyles } from './withStyles'

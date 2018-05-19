@@ -31,6 +31,7 @@ export function pluralize(word: string, count: number) {
 
   return word
 }
+
 export function fallbackCopyTextToClipboard(text) {
   const textArea = document.createElement('textarea')
   textArea.value = text
@@ -46,8 +47,10 @@ export function fallbackCopyTextToClipboard(text) {
 
   document.body.removeChild(textArea)
 }
+
 export function copyTextToClipboard(text) {
   const clipboard = (navigator as any).clipboard
+
   if (!clipboard) {
     fallbackCopyTextToClipboard(text)
     return
@@ -81,6 +84,6 @@ function b64toBlob(b64Data, contentType?, sliceSize?) {
 }
 
 export function downloadImage(name: string, base64: string, type: string) {
-  const blob = b64toBlob(base64.replace('data:'+type+';base64,', ''), type)
+  const blob = b64toBlob(base64.replace('data:' + type + ';base64,', ''), type)
   FileSaver.saveAs(blob, name)
 }

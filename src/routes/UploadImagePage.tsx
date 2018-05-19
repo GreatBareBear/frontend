@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { withApi } from '../api/withApi'
 import Api from '../api/Api'
-import { Theme, TextField, Typography, Button, Dialog, DialogActions, DialogContentText, DialogContent, DialogTitle, GridListTileBar, IconButton, Tooltip, CircularProgress } from 'material-ui'
+import { Theme, TextField, Typography, Button, Dialog, DialogActions, DialogContentText, DialogContent, DialogTitle, GridListTileBar, IconButton, Tooltip, CircularProgress } from '@material-ui/core'
 import { CSSProperties } from '@material-ui/core/styles/withStyles'
 import { WithStyles, withStyles } from '../ui/withStyles'
 import { observer } from 'mobx-react'
