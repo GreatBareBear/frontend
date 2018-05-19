@@ -1,5 +1,5 @@
 import InfoIcon from '@material-ui/icons/Info'
-import { GridListTileBar, IconButton, Tooltip, SvgIcon } from 'material-ui'
+import { GridListTileBar, IconButton, Tooltip, SvgIcon } from '@material-ui/core'
 import * as React from 'react'
 import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'

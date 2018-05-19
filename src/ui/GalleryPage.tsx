@@ -1,4 +1,4 @@
-import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton } from 'material-ui'
+import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton } from '@material-ui/core'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
@@ -6,9 +6,9 @@ import Masonry from 'react-masonry-component'
 import GalleryImage from './GalleryImage'
 import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
-import { CSSProperties } from 'material-ui/styles/withStyles'
+import { CSSProperties } from '@material-ui/core/styles/withStyles'
 import CloseIcon from '@material-ui/icons/Close'
-import { Fade } from 'material-ui'
+import { Fade } from '@material-ui/core'
 import _ = require('lodash')
 
 const styles = (theme: Theme) => ({

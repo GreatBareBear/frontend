@@ -1,4 +1,4 @@
-import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from 'material-ui'
+import { Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@material-ui/core'
 import * as React from 'react'
 import { withStyles, WithStyles } from './withStyles'
 import { UploadImage } from '../models/UploadImage'

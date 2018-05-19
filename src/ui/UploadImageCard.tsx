@@ -1,6 +1,6 @@
-import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, TextField, Theme, Typography, Checkbox } from 'material-ui'
+import { Button, Card, CardActions, CardContent, CardMedia, FormControl, InputLabel, MenuItem, Select, TextField, Theme, Typography, Checkbox } from '@material-ui/core'
 import * as React from 'react'
-import { CSSProperties } from 'material-ui/styles/withStyles'
+import { CSSProperties } from '@material-ui/core/styles/withStyles'
 import { categories } from '../models/categories'
 import EditableText from './EditableText'
 import { WithStyles, withStyles } from './withStyles'

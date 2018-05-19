@@ -1,5 +1,5 @@
-import { Theme } from 'material-ui/styles/createMuiTheme'
-import originalWithStyles, { ClassNameMap, StyleRules, StyleRulesCallback, WithStylesOptions } from 'material-ui/styles/withStyles'
+import { Theme } from '@material-ui/core/styles/createMuiTheme'
+import originalWithStyles, { ClassNameMap, StyleRules, StyleRulesCallback, WithStylesOptions } from '@material-ui/core/styles/withStyles'
 import { IReactComponent } from 'mobx-react'
 
 export interface WithStyles<ClassKey extends string = string> {

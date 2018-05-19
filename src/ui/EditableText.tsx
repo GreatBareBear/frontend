@@ -1,15 +1,15 @@
 import CloseIcon from '@material-ui/icons/Close'
 import DoneIcon from '@material-ui/icons/Done'
 import EditIcon from '@material-ui/icons/Edit'
-import createTypography, { Style, TypographyStyle } from 'material-ui/styles/createTypography'
-import createPalette from 'material-ui/styles/createPalette'
-import { IconButton, TextField, Theme, Tooltip, Typography } from 'material-ui'
+import createTypography, { Style, TypographyStyle } from '@material-ui/core/styles/createTypography'
+import createPalette from '@material-ui/core/styles/createPalette'
+import { IconButton, TextField, Theme, Tooltip, Typography } from '@material-ui/core'
 
-import { TypographyProps } from 'material-ui/Typography'
+import { TypographyProps } from '@material-ui/core/Typography'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
-import { CSSProperties } from 'material-ui/styles/withStyles'
+import { CSSProperties } from '@material-ui/core/styles/withStyles'
 import { WithStyles, withStyles } from './withStyles'
 
 const styles = (theme: Theme) => ({
