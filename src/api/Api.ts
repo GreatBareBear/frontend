@@ -6,7 +6,7 @@ import Nebulas from '../nebulify/Nebulas'
 import Account from '../nebulify/Account'
 import { UploadImage } from '../models/UploadImage'
 
-export const testnetContractAddress = 'n1kVrAU1s9m862DZcJm2Bkf3hcUB627rvuL'
+export const testnetContractAddress = 'n1qtz5JGSkXZrYtu97KvKpjdEaYr3azKkre'
 export const mainnetContractAddress = testnetContractAddress // TODO: Change this
 export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
 
@@ -82,6 +82,10 @@ export default class Api {
 
   async returnPaidUpload(dryRun: boolean = false) {
     return await this.call('returnPaidUpload', [], new BigNumber(0), dryRun)
+  }
+
+  async get(id: string) {
+    return (await this.nebulasCall('get', [id], new BigNumber(0))).result
   }
 
   async getTransactionInfo(serialNumber: SerialNumber, options?: NebPayOptions) {

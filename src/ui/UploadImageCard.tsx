@@ -84,7 +84,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
       })
     })
 
-    this.state.file.category = 'Other'
+    this.state.file.category = 'other'
   }
 
   updateCategory(event: React.ChangeEvent<HTMLSelectElement>) {
@@ -133,7 +133,7 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
               id: 'categoryPicker'
             }}>
               {categories.slice(1).map((category: string, categoryIndex: number) => (
-                <MenuItem value={_.startCase(category)} key={categoryIndex}>{_.startCase(category)}</MenuItem>
+                <MenuItem value={category} key={categoryIndex}>{_.startCase(category)}</MenuItem>
               ))}
             </Select>
           </FormControl>

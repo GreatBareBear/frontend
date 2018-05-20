@@ -87,3 +87,61 @@ export function downloadImage(name: string, base64: string, type: string) {
   const blob = b64toBlob(base64.replace('data:' + type + ';base64,', ''), type)
   FileSaver.saveAs(blob, name)
 }
+
+export function getImageBrightness(imageSrc,callback,left = 0,top = 0) {
+
+    const img = document.createElement('img')
+    img.src = imageSrc
+
+    img.style.display = 'none'
+    document.body.appendChild(img)
+
+    let colorSum = 0
+
+    img.onload = () => {
+        // create canvas
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')
+        ctx.drawImage(img,0,0)
+        
+        if (left === 0 && top === 0) {
+          const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
+          const data = imageData.data
+          let r = 0
+          let g = 0
+          let b = 0
+          let avg = 0
+
+          for (let x = 0, len = data.length; x < len; x += 4) {
+            r = data[x]
+            g = data[x + 1]
+            b = data[x + 2]
+
+            avg = Math.floor((r + g + b) / 3)
+            colorSum += avg
+          }
+        } else {
+          const imageData = ctx.getImageData(left, top, left, top)
+          const data = imageData.data
+          let r = 0
+          let g = 0
+          let b = 0
+          let avg = 0
+
+          for (let x = 0, len = data.length; x < len; x += 4) {
+            r = data[x]
+            g = data[x + 1]
+            b = data[x + 2]
+
+            avg = Math.floor((r + g + b) / 3)
+            colorSum += avg
+          }
+        }
+        
+        const brightness = Math.floor(colorSum / (img.width*img.height))
+        img.parentNode.removeChild(img)
+        callback(brightness)
+    }
+}

@@ -5,6 +5,7 @@ import { withStyles, WithStyles } from './withStyles'
 import { Image } from '../models/Image'
 import { CloudDownload } from '@material-ui/icons'
 import { downloadImage, copyTextToClipboard } from '../utils'
+import Api from '../api/Api'
 
 const styles = () => ({
   galleryImagePlaceholder: {
@@ -25,7 +26,9 @@ type GalleryImageProps = WithStyles & {
   imageReference: Image,
   onLoad?: () => void,
   onError?: () => void,
-  onCardClicked: () => void
+  onCardClicked?: () => void,
+  onLinkCopied?: () => void,
+  api: Api
 }
 
 @withStyles(styles)
@@ -65,14 +68,16 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>
           <GridListTileBar title={this.props.imageReference.name} subtitle={<span>By: {this.props.imageReference.author}</span>} actionIcon={
-            <React.Fragment>
+            <div style={{ display: 'flex' }}>
               <IconButton onClick={this.onDownloadClicked} style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
                 <Tooltip title='Download'>
                   <CloudDownload/>
                 </Tooltip>
               </IconButton>
               <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => {
-                copyTextToClipboard(`${window.location.origin}/raw/${this.props.imageReference.index}`)
+                const endpoint = this.props.api.isTestnet ? 't' : 'm'
+                copyTextToClipboard(`${window.location.origin}/raw/${endpoint}/${this.props.imageReference.index}`)
+                this.props.onLinkCopied()
               }}>
                 <Tooltip title='Copy link'>
                   <SvgIcon>
@@ -81,7 +86,7 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
                   </SvgIcon>
                 </Tooltip>
               </IconButton>
-            </React.Fragment>
+            </div>
           }/>
         </div>
       </div>

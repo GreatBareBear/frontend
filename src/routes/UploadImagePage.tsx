@@ -298,16 +298,16 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
       })
 
       const serialNumber = (response as any).serialNumber
-      const selectedFiles = this.state.selectedFiles
+      const filesToUpload = this.filesToUpload
 
       const imageCount = parseInt((await this.props.api.getImageCount()).result, 10)
-      this.props.api.ipfs.files.add(selectedFiles.map((image, index) => ({
+      this.props.api.ipfs.files.add(filesToUpload.map((image, index) => ({
         path: `uploads/${image.name}-${imageCount + index}`,
         content: Buffer.from(image.base64, 'utf8')
       }) as any)).then((filesAdded, error) => {
         if (!error) {
           let imageIndex = 0
-          selectedFiles.forEach((file, index) => {
+          filesToUpload.forEach((file, index) => {
             file.hash = filesAdded[index].hash
             file.id = imageCount + imageIndex
             imageIndex++
@@ -323,7 +323,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
           if (result.data.status === 1) {
             clearInterval(timer)
 
-            this.props.api.upload(selectedFiles).then((response: any) => {
+            this.props.api.upload(filesToUpload).then((response: any) => {
               if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
                 this.props.api.returnPaidUpload()
                 this.filesToUpload = []
@@ -347,8 +347,8 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
                   }
                 })
 
-                const files = this.state.files.filter((file) => !selectedFiles.includes(file))
-
+                const files = this.state.files.filter((file) => !filesToUpload.includes(file))
+                const selectedFiles = this.state.selectedFiles.filter((file) => !filesToUpload.includes(file))
                 this.setState({
                   files,
                   selectedFiles,
@@ -370,7 +370,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
     files = files.filter((value: UploadImage) => !this.filesToUpload.includes(value))
     this.filesToUpload = []
 
-    this.setState({ files, showUploadDialog: false })
+    this.setState({ files, showUploadDialog: false, showUploadFinished: false })
   }
 
   updateAuthor(event: React.ChangeEvent<HTMLInputElement>) {
@@ -445,27 +445,29 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
           {this.state.showUploadDialog &&
           (this.state.showUploadFinished ?
               <React.Fragment>
-                <DialogTitle>Upload complet</DialogTitle>
+                <DialogTitle>Upload completed</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
-                    Upload completed successfully. You can see images you uploaded below. (If the images don't show up immediately, you might need to refresh the page.)
+                    Upload completed successfully. You can see images you uploaded below. <br />
+                    (If the images don't show up immediately in the galleries, you might need to refresh the page.)
                   </DialogContentText>
                   <br/>
                   <Masonry elementType='div'>
-                    {this.state.selectedFiles.map((value: UploadImage, index: number) => {
+                    {this.filesToUpload.map((value: UploadImage, index: number) => {
                       return (
                         <div key={index} style={{ maxWidth: '260px', minWidth: '220px', boxSizing: 'border-box' }}>
                           <img style={{ width: '100%' }} src={value.base64}/>
                           <div>
                             <GridListTileBar style={{ bottom: '5px' }} title={value.name} subtitle={<span>By: {value.author}</span>} actionIcon={
-                              <React.Fragment>
+                              <div style={{ display: 'flex' }}>
                                 <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => downloadImage(value.name, value.base64, value.type)}>
                                   <Tooltip title='Download'>
                                     <CloudDownload/>
                                   </Tooltip>
                                 </IconButton>
                                 <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => {
-                                  copyTextToClipboard('https://imgcube.github.io/raw/' + value.id)
+                                  const endpoint = this.props.api.isTestnet ? 't' : 'm'
+                                  copyTextToClipboard(`${window.location.origin}/raw/${endpoint}/${value.id}`)
                                   this.setState({ defaultSnackbarShown: true, snackBarMessage: snackBarMessages.linkCopyActionSuccess })
                                 }}>
                                   <Tooltip title='Copy link'>
@@ -475,7 +477,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
                                     </SvgIcon>
                                   </Tooltip>
                                 </IconButton>
-                              </React.Fragment>
+                              </div>
                             }/>
                           </div>
                         </div>
@@ -569,8 +571,8 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
   }
 }
 
-function TransitionUp(props) {
-  return <Slide {...props} direction='up'/>
+export function TransitionUp(props) {
+  return <Slide {...props} direction='up' />
 }
 
 export default withRouter(UploadImagePage)

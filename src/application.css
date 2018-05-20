@@ -3,6 +3,8 @@
   max-width: 300px;
   box-sizing: border-box;
   cursor: pointer;
+  min-width: 220px;
+  min-height: 120px
 }
 
 .GalleryImage img {

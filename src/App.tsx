@@ -1,4 +1,4 @@
-import { createMuiTheme, CssBaseline, Drawer, ListItem, ListItemText, ListSubheader, MuiThemeProvider, Typography, Dialog, DialogTitle, DialogContent, Button, DialogActions } from '@material-ui/core'
+import { createMuiTheme, CssBaseline, Drawer, ListItem, ListItemText, ListSubheader, MuiThemeProvider, Typography, Dialog, DialogTitle, DialogContent, Button, DialogActions, CircularProgress } from '@material-ui/core'
 import { Theme } from '@material-ui/core/styles/'
 import { CSSProperties } from '@material-ui/core/styles/withStyles'
 import * as React from 'react'
@@ -111,7 +111,7 @@ class App extends React.Component<AppProps, {
     return categoryButtonList
   }
 
-  updateImageList = async (imageCount: number = 40, append: boolean = false) => {
+  updateImageList = async (imageCount: number = 50, append: boolean = false) => {
     if (this.state.galleryShouldBeLoading) {
       return
     }
@@ -121,7 +121,7 @@ class App extends React.Component<AppProps, {
 
     this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
-    const result = await this.props.api.query(imageCount, this.state.images.length || 1, categoryName, new BigNumber(0))
+    const result = await this.props.api.query(imageCount, images.length, categoryName, new BigNumber(0))
 
     if (result.length === 0) {
       this.setState({ images, galleryShouldBeLoading: false, anyImages: false })
@@ -130,7 +130,7 @@ class App extends React.Component<AppProps, {
       return
     }
 
-    const imagesLength = this.state.images.length
+    const imagesLength = images.length
 
     const promises = []
 
@@ -249,23 +249,48 @@ class App extends React.Component<AppProps, {
           <div className={classes.content}>
             <div className={classes.toolbar}/>
             <Switch>
-              <Route path='/raw/:id' render={({ match }) => {
+              <Route path='/raw/:endpoint/:id' render={({ match }) => {
+                if (this.rawStatus === -2) {
+                  if (match.params.endpoint === 't') {
+                    this.props.api.setApi(true)
+                  } else if (match.params.endpoint === 'm') {
+                    this.props.api.setApi(false)
+                  } else {
+                    this.rawStatus = 404
+                    return (<Typography>Unknown endpoint '{match.params.endpoint}', should be 't' or 'm'.</Typography>)
+                  }
+                }
+                
                 if (!isNaN(match.params.id) && this.rawStatus === -2) {
-                  const imageId = Number(match.params.id)
+                  const imageId: string = match.params.id
                   this.rawStatus = -1
-                  this.props.api.query(imageId + 2, imageId + 1, 'all', new BigNumber(0)).then((result) => {
-                    if (result.length > 0) {
-                      this.props.api.ipfs.get(result[0].url).then((files, error) => {
+                  this.props.api.get(imageId).then((result) => {
+                    if (result !== null) {
+                      let image
+                      try {
+                        image = JSON.parse(result)
+                      } catch (e) {
+                        document.getElementsByTagName('head')[0].innerHTML = ''
+                        document.body.innerHTML = '<font style="font-size: 1.5rem; font-family: \'Arial\'; left: 50%; top: 50%; position: fixed; transform: translate(-50%, -50%)" color="white">An error occured while loading.</font>'
+                        document.body.style.margin = '0px'
+                        document.body.style.display = 'flex'
+                        document.body.style.justifyContent = 'center'
+                        return
+                      }
+                      this.props.api.ipfs.get(image.url).then((files, error) => {
                         if (error) {
                           console.error(error)
-                          this.rawStatus = 1
+                          document.getElementsByTagName('head')[0].innerHTML = ''
+                          document.body.innerHTML = '<font style="font-size: 1.5rem; font-family: \'Arial\'; left: 50%; top: 50%; position: fixed; transform: translate(-50%, -50%)" color="white">An error occured while loading.</font>'
+                          document.body.style.margin = '0px'
+                          document.body.style.display = 'flex'
+                          document.body.style.justifyContent = 'center'
                           return
                         }
                         this.rawStatus = 0
                         document.getElementsByTagName('head')[0].innerHTML = ''
                         document.body.innerHTML = ''
                         document.body.style.margin = '0px'
-                        document.body.style.background = '#0e0e0e'
                         document.body.style.display = 'flex'
                         document.body.style.justifyContent = 'center'
                         const image: HTMLImageElement = document.createElement('img')
@@ -280,14 +305,35 @@ class App extends React.Component<AppProps, {
                       }
                     }
                   })
-                  return (<Typography variant='headline'>Generating image {match.params.id}... </Typography>)
+                  return null
                 }
-                if (this.rawStatus === 1) {
+                if (this.rawStatus === 404) {
+                  return (<Typography>Unknown endpoint '{match.params.endpoint}', should be 't' or 'm'.</Typography>)
+                } else if (this.rawStatus === 1) {
                   return (<Typography variant='headline'>Image with id '{match.params.id}' doesn't exist. </Typography>)
                 } else if (this.rawStatus === -2) {
                   return (<Typography variant='headline'>Invalid image id '{match.params.id}'. </Typography>)
                 } else if (this.rawStatus === -1) {
-                  return (<Typography variant='headline'>Fetching Nebulas data for image {match.params.id}... </Typography>)
+                  setTimeout(() => {
+                    const progress = document.getElementById('progress')
+                    if (progress === null) {
+                      const progressTwo = document.getElementById('progressTwo')
+                      if (progressTwo === null) {
+                        document.getElementsByTagName('head')[0].innerHTML = ''
+                        document.body.innerHTML = '<font style="font-size: 1.5rem; font-family: \'Arial\'; left: 50%; top: 50%; position: fixed; transform: translate(-50%, -50%)" color="white">An error occured while loading.</font>'
+                        document.body.style.margin = '0px'
+                        document.body.style.display = 'flex'
+                        document.body.style.justifyContent = 'center'
+                        return
+                      }
+                      return
+                    }
+                    progress.id = 'progressTwo'
+                    document.documentElement.appendChild(progress)
+                    document.body.style.background = '#0e0e0e'
+                    document.getElementById('root').innerHTML = ''
+                  }, 200)
+                  return (<CircularProgress id='progress' style={{ left: '50%', top: '50%', position: 'fixed', transform: 'translate2d(-50%, -50%)' }} />)
                 } else {
                   return null
                 }
@@ -305,7 +351,7 @@ class App extends React.Component<AppProps, {
                     return <Redirect to={`/category/${match.params.id.toLowerCase()}`}/>
                   }
 
-                  return <GalleryPage infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
+                  return <GalleryPage api={this.props.api} infiniteScrollCooldownLength={3000} pushMoreCallback={this.updateImageList} currentCategory={this.category.name} images={this.state.images} shouldBeLoading={this.state.galleryShouldBeLoading} anyImages={this.state.anyImages}/>
                 } else {
                   return (
                     <Typography variant={'title'}>

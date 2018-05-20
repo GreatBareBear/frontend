@@ -1,4 +1,4 @@
-import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton } from '@material-ui/core'
+import { CircularProgress, LinearProgress, Typography, Modal, Theme, IconButton, Snackbar, Button, SvgIcon } from '@material-ui/core'
 import { observable } from 'mobx'
 import { observer } from 'mobx-react'
 import * as React from 'react'
@@ -10,6 +10,10 @@ import { CSSProperties } from '@material-ui/core/styles/withStyles'
 import CloseIcon from '@material-ui/icons/Close'
 import { Fade } from '@material-ui/core'
 import _ = require('lodash')
+import { TransitionUp } from '../routes/UploadImagePage'
+import { FileUpload, CloudDownload } from '@material-ui/icons'
+import { downloadImage, copyTextToClipboard, getImageBrightness } from '../utils'
+import Api from '../api/Api'
 
 const styles = (theme: Theme) => ({
   linearProgress: {
@@ -32,15 +36,17 @@ const styles = (theme: Theme) => ({
     top: '50%',
     transform: 'translate(-50%, -50%)',
     color: 'white',
-    borderRadius: '20px'
+    borderRadius: '20px',
+    minWidth: '600px'
   } as CSSProperties,
   imageLightBoxDesc: {
     position: 'absolute',
-    background: 'rgba(0, 0, 0, 0.4)',
     width: 'calc(100% - ' + theme.spacing.unit * 2 + 'px)',
     color: 'white',
-    marginTop: '-107px',
-    padding: theme.spacing.unit * 2
+    padding: theme.spacing.unit * 2,
+    display: 'flex',
+    transform: 'translateY(-100%)',
+    justifyContent: 'space-between'
   } as CSSProperties,
   imageLightBoxCloseBtn: {
     color: 'white',
@@ -58,13 +64,16 @@ type GalleryPageProps = WithStyles & {
   infiniteScrollCooldownLength: number,
   currentCategory: string,
   shouldBeLoading: boolean,
-  anyImages: boolean
+  anyImages: boolean,
+  api: Api
 }
 
 type LightBoxObject = {
   reference: any,
   image: Image,
-  isShown: boolean
+  isShown: boolean,
+  isDark: boolean,
+  isCloseDark: boolean
 }
 
 @withStyles(styles)
@@ -77,13 +86,25 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   @observable lightBox: LightBoxObject = {
     image: undefined,
     reference: undefined,
-    isShown: false
+    isShown: false,
+    isDark: false,
+    isCloseDark: false
   } as LightBoxObject
+
+  @observable linkCopiedSnackbarShown = false
 
   showLightbox(image: Image) {
     this.hideLightbox()
-    this.lightBox.image = image
-    this.lightBox.isShown = true
+    getImageBrightness(image.src, (brightness: number) => {
+      getImageBrightness(image.src, (brightness2) => {
+        this.lightBox.image = image
+        this.lightBox.isShown = true
+        this.lightBox.isDark = brightness < 127.5
+        this.lightBox.isCloseDark = brightness2 < 127.5
+      }, image.width - 48, 48)
+      
+    })
+    
   }
 
   hideLightbox() {
@@ -146,11 +167,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
   }
 
   get isGalleryScrollable() {
-    if (this.isGalleryLoaded) {
-      return document.documentElement.clientHeight < document.documentElement.scrollHeight
-    }
-
-    return this.props.images.length > 50
+    return document.documentElement.clientHeight < document.documentElement.scrollHeight
   }
 
   generateGalleryClassName() {
@@ -182,7 +199,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
     const childElements = images.map((image: Image) => {
       return (
-        <GalleryImage key={image.index} onCardClicked={() => this.showLightbox(image)} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
+        <GalleryImage key={image.index} api={this.props.api} onLinkCopied={() => this.linkCopiedSnackbarShown = true} onCardClicked={() => this.showLightbox(image)} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
       )
     })
 
@@ -192,13 +209,38 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
       )
     }
 
+    let lightboxColor = 'white'
+    let lightBoxDescColor = 'rgba(0, 0, 0, 0.4)'
+    let lightBoxCloseColor = 'white'
+    if (this.lightBox.isShown) {
+      lightboxColor = this.lightBox.isDark ? 'black' : 'white'
+      lightBoxDescColor = this.lightBox.isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
+      lightBoxCloseColor = this.lightBox.isCloseDark ? 'white' : 'black'
+    } 
+    
     return (
       <React.Fragment>
         {(!this.props.shouldBeLoading || this.isGalleryScrollable) &&
         <Masonry ref={(ref) => this.galleryReference = ref} elementType='div' className={this.generateGalleryClassName()}>
           {childElements}
         </Masonry>}
-
+        <Snackbar
+          open={this.linkCopiedSnackbarShown}
+          onClose={() => this.linkCopiedSnackbarShown = false}
+          TransitionComponent={TransitionUp}
+          message={<span>Link copied!</span>}
+          action={
+            <IconButton
+              key='close'
+              aria-label='Close'
+              color='inherit'
+              className={classes.close}
+              onClick={() => this.linkCopiedSnackbarShown = false}
+            >
+              <CloseIcon />
+            </IconButton>
+          }
+        />
         {((this.isGalleryLoaded === false || this.props.shouldBeLoading || this.isGalleryScrollable) && this.props.anyImages) &&
         <div className='GalleryLoadingMore'>
           {this.isGalleryScrollable ? <CircularProgress color='primary'/> : <LinearProgress variant='indeterminate' className={classes.linearProgress}/>}
@@ -208,24 +250,57 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
             {this.lightBox.isShown &&
             <Modal open={this.lightBox.isShown} onClose={() => this.hideLightbox()}>
               <div className={classes.imageLightBox} ref={(ref) => this.lightBox.reference = ref}>
-                <IconButton className={classes.imageLightBoxCloseBtn} onClick={() => this.hideLightbox()}>
+                <IconButton className={classes.imageLightBoxCloseBtn} style={{ color: lightBoxCloseColor }} onClick={() => this.hideLightbox()}>
                   <CloseIcon/>
                 </IconButton>
                 {
-                  this.lightBox.image !== undefined && <React.Fragment> <img src={this.lightBox.image.src} style={{ maxWidth: '1000px' }}/>
-                    <div className={classes.imageLightBoxDesc}>
-                      <Typography variant='headline' component='strong' style={{
-                        marginBottom: '15px',
-                        color: 'white'
+                  this.lightBox.image !== undefined && 
+                  <React.Fragment>
+                    <div style={{ minWidth: '715px', minHeight: '200px', justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
+                      <img src={this.lightBox.image.src} style={{ minWidth: '250px', maxWidth: '1000px' }}/>
+                    </div>
+                    <div className={classes.imageLightBoxDesc} style={{ backgroundColor: lightBoxDescColor }}>
+                      <div style={{ flex: 1, maxWidth: '50%' }}>
+                        <Typography variant='headline' component='strong' style={{
+                          marginBottom: '15px',
+                          color: lightboxColor,
+                          textOverflow: 'ellipsis',
+                          overflow: 'hidden',
+                          whiteSpace: 'nowrap'
+                        }}>
+                          {this.lightBox.image.name}
+                        </Typography>
+                        <Typography variant='subheading' style={{
+                          marginTop: '15px',
+                          color: lightboxColor
+                        }}>
+                          <strong>Created by:</strong> {this.lightBox.image.author}
+                        </Typography>
+                      </div>
+                      <div style={{
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        display: 'flex'
                       }}>
-                        {this.lightBox.image.name}
-                      </Typography>
-                      <Typography variant='subheading' style={{
-                        marginTop: '15px',
-                        color: 'white'
-                      }}>
-                        <strong>Created by:</strong> {this.lightBox.image.author}
-                      </Typography>
+                        <Button color='inherit' style={{ color: lightboxColor }} onClick={() => {
+                          const mimeType = this.lightBox.image.src.substring(0, this.lightBox.image.src.indexOf(';')).split(':')[1]
+                          downloadImage(this.lightBox.image.name, this.lightBox.image.src, mimeType)
+                        }}>
+                          <CloudDownload style={{ marginRight: '4px', color: lightboxColor }} />
+                          Download image
+                        </Button>
+                        <Button color='inherit' style={{ color: lightboxColor }} onClick={() => {
+                          const endpoint = this.props.api.isTestnet ? 't' : 'm'
+                          copyTextToClipboard(`${window.location.origin}/raw/${endpoint}/${this.lightBox.image.index}`)
+                          this.linkCopiedSnackbarShown = true
+                        }}>
+                          <SvgIcon style={{ marginRight: '4px', color: lightboxColor }}>
+                            <path fill='none' d='M0 0h24v24H0z' />
+                            <path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm-1 4l6 6v10c0 1.1-.9 2-2 2H7.99C6.89 23 6 22.1 6 21l.01-14c0-1.1.89-2 1.99-2h7zm-1 7h5.5L14 6.5V12z' />
+                          </SvgIcon>
+                          Copy raw url
+                        </Button>
+                      </div>
                     </div>
                   </React.Fragment>
                 }
