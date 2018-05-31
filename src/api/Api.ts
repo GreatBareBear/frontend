@@ -7,7 +7,7 @@ import Account from '../nebulify/Account'
 import { UploadImage } from '../models/UploadImage'
 
 export const testnetContractAddress = 'n1gKtRQCEApnCvdFtCH7U2S2dL87kewQ8Yi'
-export const mainnetContractAddress = 'n1puZAPa5ddqBJ7ZTTVwwbrAED8tauvnrud'
+export const mainnetContractAddress = 'n1knkT1wDdfuYkjra7EDUryQJcBhPLkMvbe'
 export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
 
 export type CallResult = {

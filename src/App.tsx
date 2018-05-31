@@ -150,7 +150,7 @@ class App extends React.Component<AppProps, {
         }
 
         images.push({
-          id: index + imagesLength,
+          id: rawImage.id,
           name: rawImage.name,
           src: files[0].content.toString('utf8'),
           author: rawImage.author,
