@@ -11,9 +11,9 @@ import CloseIcon from '@material-ui/icons/Close'
 import { Fade } from '@material-ui/core'
 import _ = require('lodash')
 import { TransitionUp } from '../routes/UploadImagePage'
-import { FileUpload, CloudDownload } from '@material-ui/icons'
 import { downloadImage, copyTextToClipboard, getImageBrightness } from '../utils'
 import Api from '../api/Api'
+import { CloudDownload } from '@material-ui/icons'
 
 const styles = (theme: Theme) => ({
   linearProgress: {
@@ -102,9 +102,9 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
         this.lightBox.isDark = brightness < 127.5
         this.lightBox.isCloseDark = brightness2 < 127.5
       }, image.width - 48, 48)
-      
+
     })
-    
+
   }
 
   hideLightbox() {
@@ -199,7 +199,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
 
     const childElements = images.map((image: Image) => {
       return (
-        <GalleryImage key={image.index} api={this.props.api} onLinkCopied={() => this.linkCopiedSnackbarShown = true} onCardClicked={() => this.showLightbox(image)} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
+        <GalleryImage key={image.id} api={this.props.api} onLinkCopied={() => this.linkCopiedSnackbarShown = true} onCardClicked={() => this.showLightbox(image)} imageReference={image} onLoad={this.updateImage} onError={this.updateImage}/>
       )
     })
 
@@ -209,15 +209,10 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
       )
     }
 
-    let lightboxColor = 'white'
-    let lightBoxDescColor = 'rgba(0, 0, 0, 0.4)'
-    let lightBoxCloseColor = 'white'
-    if (this.lightBox.isShown) {
-      lightboxColor = this.lightBox.isDark ? 'black' : 'white'
-      lightBoxDescColor = this.lightBox.isDark ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)'
-      lightBoxCloseColor = this.lightBox.isCloseDark ? 'white' : 'black'
-    } 
-    
+    const lightBoxColor = 'white'
+    const lightBoxDescColor = 'rgba(0, 0, 0, 0.4)'
+    const lightBoxCloseColor = 'white'
+
     return (
       <React.Fragment>
         {(!this.props.shouldBeLoading || this.isGalleryScrollable) &&
@@ -254,7 +249,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
                   <CloseIcon/>
                 </IconButton>
                 {
-                  this.lightBox.image !== undefined && 
+                  this.lightBox.image !== undefined &&
                   <React.Fragment>
                     <div style={{ minWidth: '715px', minHeight: '200px', justifyContent: 'center', alignItems: 'center', display: 'flex' }}>
                       <img src={this.lightBox.image.src} style={{ minWidth: '250px', maxWidth: '1000px' }}/>
@@ -263,7 +258,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
                       <div style={{ flex: 1, maxWidth: '50%' }}>
                         <Typography variant='headline' component='strong' style={{
                           marginBottom: '15px',
-                          color: lightboxColor,
+                          color: lightBoxColor,
                           textOverflow: 'ellipsis',
                           overflow: 'hidden',
                           whiteSpace: 'nowrap'
@@ -272,7 +267,7 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
                         </Typography>
                         <Typography variant='subheading' style={{
                           marginTop: '15px',
-                          color: lightboxColor
+                          color: lightBoxColor
                         }}>
                           <strong>Created by:</strong> {this.lightBox.image.author}
                         </Typography>
@@ -282,23 +277,37 @@ export default class GalleryPage extends React.Component<GalleryPageProps, any> 
                         alignItems: 'center',
                         display: 'flex'
                       }}>
-                        <Button color='inherit' style={{ color: lightboxColor }} onClick={() => {
+                        <Button color='inherit' style={{ color: lightBoxColor }} onClick={() => {
                           const mimeType = this.lightBox.image.src.substring(0, this.lightBox.image.src.indexOf(';')).split(':')[1]
                           downloadImage(this.lightBox.image.name, this.lightBox.image.src, mimeType)
                         }}>
-                          <CloudDownload style={{ marginRight: '4px', color: lightboxColor }} />
+                          <CloudDownload style={{
+                            marginRight: '4px'
+                          }}/>
                           Download image
                         </Button>
-                        <Button color='inherit' style={{ color: lightboxColor }} onClick={() => {
-                          const endpoint = this.props.api.isTestnet ? 't' : 'm'
-                          copyTextToClipboard(`${window.location.origin}/raw/${endpoint}/${this.lightBox.image.index}`)
+                        <Button color='inherit' style={{ color: lightBoxColor }} onClick={() => {
+                          copyTextToClipboard(`${window.location.origin}/raw/${this.lightBox.image.id}`)
                           this.linkCopiedSnackbarShown = true
                         }}>
-                          <SvgIcon style={{ marginRight: '4px', color: lightboxColor }}>
+                          <SvgIcon style={{ marginRight: '4px', color: lightBoxColor }}>
                             <path fill='none' d='M0 0h24v24H0z' />
                             <path d='M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm-1 4l6 6v10c0 1.1-.9 2-2 2H7.99C6.89 23 6 22.1 6 21l.01-14c0-1.1.89-2 1.99-2h7zm-1 7h5.5L14 6.5V12z' />
                           </SvgIcon>
-                          Copy raw url
+                          Copy link
+                        </Button>
+                        <Button color='inherit' style={{ color: lightBoxColor }} onClick={() => {
+                          this.props.api.tip(this.lightBox.image.id)
+                        }}>
+                            <SvgIcon style={{
+                              width: '29px',
+                              height: '29px',
+                              marginBottom: '5px',
+                              marginRight: '4px'
+                            }}>
+                                <path fill='white' d='M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z' />
+                            </SvgIcon>
+                            Tip
                         </Button>
                       </div>
                     </div>

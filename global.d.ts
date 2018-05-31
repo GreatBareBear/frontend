@@ -19,7 +19,7 @@ interface NebPayOptions {
     container?
   }
   callback?: string
-  listener?: (response: ContractCallResult | string) => void
+  listener?: (response: ContractCallResult) => void
   nrc20?: Nrc20Currency
 }
 
@@ -86,6 +86,7 @@ interface ContractCallResult {
   result: any
   executionError: string
   estimatedGas: number
+  serialNumber: string
 }
 
 interface Contract {

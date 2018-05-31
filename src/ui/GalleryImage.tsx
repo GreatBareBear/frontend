@@ -6,6 +6,7 @@ import { Image } from '../models/Image'
 import { CloudDownload } from '@material-ui/icons'
 import { downloadImage, copyTextToClipboard } from '../utils'
 import Api from '../api/Api'
+import { withApi } from '../api/withApi'
 
 const styles = () => ({
   galleryImagePlaceholder: {
@@ -32,6 +33,7 @@ type GalleryImageProps = WithStyles & {
 }
 
 @withStyles(styles)
+@withApi()
 export default class GalleryImage extends React.Component<GalleryImageProps> {
   references: GalleryImageReferences = {} as GalleryImageReferences
 
@@ -42,14 +44,11 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
   showImage() {
     this.references.placeholder.style.display = 'none'
     this.references.tileBar.style.display = ''
-
     this.props.onLoad()
   }
 
-  onDownloadClicked = () => {
-    const { imageReference } = this.props
-    const mimeType = imageReference.src.substring(0, imageReference.src.indexOf(';')).split(':')[1]
-    downloadImage(imageReference.name, imageReference.src, mimeType)
+  onTipClicked = () => {
+    this.props.api.tip(this.props.imageReference.id)
   }
 
   onImageClicked(event: React.MouseEvent<HTMLDivElement>) {
@@ -63,20 +62,25 @@ export default class GalleryImage extends React.Component<GalleryImageProps> {
     const { classes } = this.props
 
     return (
-      <div key={this.props.imageReference.index} className='GalleryImage' onClick={(event) => this.onImageClicked(event)}>
+      <div key={this.props.imageReference.id} className='GalleryImage' onClick={(event) => this.onImageClicked(event)}>
         <img onLoad={() => this.showImage()} onError={() => this.showImage()} src={this.props.imageReference.src} alt={this.props.imageReference.name} title={this.props.imageReference.name}/>
         <div ref={(ref) => this.references.placeholder = ref} className={classes.galleryImagePlaceholder}/>
         <div ref={(ref) => this.references.tileBar = ref} style={{ display: 'none' }}>
           <GridListTileBar title={this.props.imageReference.name} subtitle={<span>By: {this.props.imageReference.author}</span>} actionIcon={
             <div style={{ display: 'flex' }}>
-              <IconButton onClick={this.onDownloadClicked} style={{ color: 'rgba(255, 255, 255, 0.54)' }}>
-                <Tooltip title='Download'>
-                  <CloudDownload/>
+              <IconButton onClick={this.onTipClicked}>
+                <Tooltip title='Tip'>
+                  <SvgIcon style={{
+                    width: '29px',
+                    height: '29px',
+                    marginBottom: '5px'
+                  }}>
+                    <path fill='rgba(255, 255, 255, 0.54)' d='M5,6H23V18H5V6M14,9A3,3 0 0,1 17,12A3,3 0 0,1 14,15A3,3 0 0,1 11,12A3,3 0 0,1 14,9M9,8A2,2 0 0,1 7,10V14A2,2 0 0,1 9,16H19A2,2 0 0,1 21,14V10A2,2 0 0,1 19,8H9M1,10H3V20H19V22H1V10Z' />
+                  </SvgIcon>
                 </Tooltip>
               </IconButton>
               <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => {
-                const endpoint = this.props.api.isTestnet ? 't' : 'm'
-                copyTextToClipboard(`${window.location.origin}/raw/${endpoint}/${this.props.imageReference.index}`)
+                copyTextToClipboard(`${window.location.origin}/raw/${this.props.imageReference.id}`)
                 this.props.onLinkCopied()
               }}>
                 <Tooltip title='Copy link'>

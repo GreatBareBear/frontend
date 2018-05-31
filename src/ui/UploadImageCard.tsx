@@ -15,7 +15,7 @@ const styles = (theme: Theme) => ({
     marginTop: theme.spacing.unit
   },
   card: {
-    width: 345, // TODO: Make the cards responsive (like a card row), but they cannot rescale by changing their description / name.
+    width: 345,
     float: 'left',
     margin: '20px 20px 20px 0px'
   } as CSSProperties,
@@ -71,19 +71,6 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
   }
 
   async componentWillMount() {
-    const data = await getImageData(this.props.fileData)
-
-    fetch('https://api.coinmarketcap.com/v2/ticker/1908/').then((response: any) => {
-      response.json().then((ticker) => {
-        const nasPrice = new BigNumber(calculateImagePrice(data).toString().substring(17, 0))
-
-        this.setState({
-          price: nasPrice,
-          usdPrice: new BigNumber(new BigNumber(ticker.data.quotes.USD.price).multipliedBy(nasPrice).toString().substring(6, 0))
-        })
-      })
-    })
-
     this.state.file.category = 'other'
   }
 
@@ -138,13 +125,14 @@ export default class UploadImageCard extends React.Component<UploadedImageCardPr
             </Select>
           </FormControl>
         </CardContent>
-        <CardActions>
-          {this.state.price && this.state.usdPrice && <Typography className={classes.priceText}>{this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
-          <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
-            Delete
-          </Button>
+        <CardActions style={{
+          flexFlow: 'row-reverse'
+        }}>
           <Button size='small' color='primary' onClick={() => this.props.uploadFileCallback()}>
             Upload
+          </Button>
+          <Button size='small' color='secondary' onClick={() => this.props.removeFileCallback(index)}>
+            Delete
           </Button>
         </CardActions>
       </Card>

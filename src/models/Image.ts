@@ -2,7 +2,7 @@ import { UploadImage } from './UploadImage'
 import BigNumber from 'bignumber.js'
 
 export interface Image {
-  index: number
+  id: string
   name: string
   src: string
   author: string

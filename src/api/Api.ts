@@ -6,13 +6,15 @@ import Nebulas from '../nebulify/Nebulas'
 import Account from '../nebulify/Account'
 import { UploadImage } from '../models/UploadImage'
 
-export const testnetContractAddress = 'n1qtz5JGSkXZrYtu97KvKpjdEaYr3azKkre'
-export const mainnetContractAddress = testnetContractAddress // TODO: Change this
+export const testnetContractAddress = 'n1gKtRQCEApnCvdFtCH7U2S2dL87kewQ8Yi'
+export const mainnetContractAddress = 'n1puZAPa5ddqBJ7ZTTVwwbrAED8tauvnrud'
 export const imgCubeAccount = Account.fromAddress('n1FhdXhRaDQWvCMwC29JBMuuCxUczUuecYU')
 
-export type CallResult = NebulasCallResult & {
-  serialNumber?: string
-} | string
+export type CallResult = {
+  txHash: Hash,
+  contractAddress: Address,
+  serialNumber: string
+}
 
 export type NebulasCallResult = ContractCallResult & {
   transaction?: {
@@ -30,23 +32,18 @@ export default class Api {
   private contractAddress: string
 
   get chainId() {
-    return this.isTestnet ? 1001 : 100 // TODO: 1 might not be mainnet
+    return this.isTestnet ? 1001 : 100
   }
 
   constructor() {
     this.nebulas = new Nebulas()
 
-    // TODO: Change this to mainnet in prod
-    this.setApi(true)
+    this.setApi(false)
 
     this.nebPay = new NebulasPay()
     this.ipfs = ipfsApi('ipfs.nufflee.com', '443', {
       protocol: 'https'
     })
-  }
-
-  async payUpload(value: BigNumber, dryRun: boolean = false): Promise<any> {
-    return await this.call('payUpload', [], value, dryRun)
   }
 
   async upload(images: UploadImage[], dryRun: boolean = false) {
@@ -61,7 +58,7 @@ export default class Api {
   }
 
   async getImageCount(): Promise<any> {
-    return this.call('getImageCount', [], new BigNumber(0), true)
+    return this.nebulasCall<number>('getImageCount', [], new BigNumber(0))
   }
 
   async query(count: number, offset: number, category: string, value: BigNumber) {
@@ -75,39 +72,50 @@ export default class Api {
       payload[2]--
     }
 
-    const raw = (await this.nebulasCall('query', payload, value)).result
-
-    return JSON.parse(raw === '' ? '[]' : raw)
+    return await this.nebulasCall('query', payload, value)
   }
 
-  async returnPaidUpload(dryRun: boolean = false) {
-    return await this.call('returnPaidUpload', [], new BigNumber(0), dryRun)
+  async tip(id: string, dryRun = false) {
+    return await this.call('tip', [id], new BigNumber(0.01), dryRun)
   }
 
   async get(id: string) {
-    return (await this.nebulasCall('get', [id], new BigNumber(0))).result
+    return await this.nebulasCall('get', [id], new BigNumber(0))
   }
 
   async getTransactionInfo(serialNumber: SerialNumber, options?: NebPayOptions) {
     return this.nebPay.queryPayInfo(serialNumber, options)
   }
 
-  async call(functionName: string, payload: {}, value: BigNumber, dryRun: boolean = false): Promise<CallResult> {
-    return new Promise<CallResult>((resolve) => {
+  async call<T>(functionName: string, payload: {}, value: BigNumber, dryRun: boolean = false): Promise<T> {
+    return new Promise<T>((resolve) => {
       const args = JSON.stringify(payload)
       const callbackUrl = this.isTestnet ? NebulasPay.config.testnetUrl : NebulasPay.config.mainnetUrl
 
       if (dryRun) {
         this.nebPay.simulateCall(this.contractAddress, value.toString(), functionName, args, {
           listener: (response) => {
-            resolve(response)
+            let json = response.result
+
+            if (json === '') {
+              json = '[]'
+            }
+
+            try {
+              resolve({
+                ...JSON.parse(json),
+                serialNumber: response.serialNumber
+              })
+            } catch (error) {
+              throw new Error(json)
+            }
           },
           callback: callbackUrl
         })
       } else {
         const serialNumber = this.nebPay.call(this.contractAddress, value.toString(), functionName, args, {
           listener: (response: any) => {
-            if (typeof response  === 'string') {
+            if (typeof response === 'string') {
               resolve({
                 response,
                 serialNumber
@@ -115,6 +123,7 @@ export default class Api {
             } else {
               resolve({
                 ...response,
+                result: response.result,
                 serialNumber
               })
             }
@@ -125,25 +134,33 @@ export default class Api {
     })
   }
 
-  async nebulasCall(functionName: string, payload: {}, value: BigNumber = new BigNumber(0)): Promise<NebulasCallResult> {
-    return new Promise<NebulasCallResult>(async (resolve) => {
-      const nonce = (await this.nebulas.api.getAccountState(imgCubeAccount.getAddress())).nonce + 1
+  async nebulasCall<T>(functionName: string, payload: {}, value: BigNumber = new BigNumber(0)): Promise<T> {
+    const nonce = (await this.nebulas.api.getAccountState(imgCubeAccount.getAddress())).nonce + 1
 
-      const contract = {
-        function: functionName,
-        args: JSON.stringify(payload)
-      }
+    const contract = {
+      function: functionName,
+      args: JSON.stringify(payload)
+    }
 
-      this.nebulas.api.call({
-        from: imgCubeAccount.getAddress(),
-        to: this.contractAddress,
-        value: value.toString(),
-        nonce,
-        gasPrice: 1000000,
-        gasLimit: 200000,
-        contract
-      }).then((resolve))
-    })
+    let json = (await this.nebulas.api.call({
+      from: imgCubeAccount.getAddress(),
+      to: this.contractAddress,
+      value: value.toString(),
+      nonce,
+      gasPrice: 1000000,
+      gasLimit: 200000,
+      contract
+    })).result
+
+    if (json === '') {
+      json = '[]'
+    }
+
+    try {
+      return JSON.parse(json)
+    } catch (error) {
+      throw new Error(json)
+    }
   }
 
   setApi(testnet: boolean) {

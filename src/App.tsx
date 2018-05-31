@@ -14,6 +14,7 @@ import { Image } from './models/Image'
 import { categories, isValidCategory } from './models/categories'
 import { withApi } from './api/withApi'
 import Api from './api/Api'
+import { TrendingDown } from '@material-ui/icons'
 
 const styles = (theme: Theme) => ({
   root: {
@@ -69,7 +70,8 @@ class App extends React.Component<AppProps, {
   images: Image[],
   galleryShouldBeLoading: boolean,
   anyImages: boolean,
-  tosDialogOpened: boolean
+  tosDialogOpened: boolean,
+  rawLoading: boolean
 }> {
   category = {
     name: categories[0],
@@ -80,7 +82,8 @@ class App extends React.Component<AppProps, {
     images: [] as Image[],
     galleryShouldBeLoading: false,
     anyImages: true,
-    tosDialogOpened: false
+    tosDialogOpened: false,
+    rawLoading: false
   }
 
   constructor(props: any) {
@@ -121,7 +124,7 @@ class App extends React.Component<AppProps, {
 
     this.setState({ images, galleryShouldBeLoading: true, anyImages: true })
 
-    const result = await this.props.api.query(imageCount, images.length, categoryName, new BigNumber(0))
+    const result: any = await this.props.api.query(imageCount, images.length, categoryName, new BigNumber(0))
 
     if (result.length === 0) {
       this.setState({ images, galleryShouldBeLoading: false, anyImages: false })
@@ -147,7 +150,7 @@ class App extends React.Component<AppProps, {
         }
 
         images.push({
-          index: index + imagesLength,
+          id: index + imagesLength,
           name: rawImage.name,
           src: files[0].content.toString('utf8'),
           author: rawImage.author,
@@ -161,10 +164,6 @@ class App extends React.Component<AppProps, {
       this.category.updated = true
       this.setState({ images, galleryShouldBeLoading: false, anyImages: true })
     })
-  }
-
-  updateEndpoint = () => {
-    this.updateImageList()
   }
 
   renderToSDialog() {
@@ -229,117 +228,96 @@ class App extends React.Component<AppProps, {
     return null
   }
 
-  rawStatus = -2
+  rawLoading = false
+  rawLoaded = false
+  rawNotFound = false
+  rawRoute = false
+  raw = ''
 
   render() {
     const { classes } = this.props
+
+    console.log(((!this.rawLoading && !this.rawLoaded) || this.rawNotFound) && this.rawRoute)
 
     return (
       <MuiThemeProvider theme={theme}>
         <div className={classes.root}>
           <CssBaseline/>
-          <TopBar onEndpointChange={this.updateEndpoint}/>
-          <Drawer variant='permanent' classes={{ paper: classes.drawerPaper }}>
-            <div className={classes.toolbar}/>
-            <ListSubheader component='div'>Categories</ListSubheader>
-            {this.renderCategoryButtons()}
-            <ListSubheader component='div' disableSticky={true} className={classes.versionText}>imgCube Web v1.0</ListSubheader>
-          </Drawer>
+          {
+            ((!this.rawLoading && !this.rawLoaded) || this.rawNotFound) && <React.Fragment>
+              <TopBar/>
+              <Drawer variant='permanent' classes={{ paper: classes.drawerPaper }}>
+                <div className={classes.toolbar}/>
+                <ListSubheader component='div'>Categories</ListSubheader>
+                {this.renderCategoryButtons()}
+                <ListSubheader component='div' disableSticky={true} className={classes.versionText}>imgCube Web v1.0</ListSubheader>
+              </Drawer>
+            </React.Fragment>
+          }
+
           {this.renderToSDialog()}
-          <div className={classes.content}>
+          <div className={classes.content} style={this.rawLoading || this.rawLoaded && !this.rawNotFound ? {
+            backgroundColor: '#0E0E0E'
+          } : {}}>
             <div className={classes.toolbar}/>
             <Switch>
-              <Route path='/raw/:endpoint/:id' render={({ match }) => {
-                if (this.rawStatus === -2) {
-                  if (match.params.endpoint === 't') {
-                    this.props.api.setApi(true)
-                  } else if (match.params.endpoint === 'm') {
-                    this.props.api.setApi(false)
-                  } else {
-                    this.rawStatus = 404
-                    return (<Typography>Unknown endpoint '{match.params.endpoint}', should be 't' or 'm'.</Typography>)
-                  }
-                }
-                
-                if (!isNaN(match.params.id) && this.rawStatus === -2) {
-                  const imageId: string = match.params.id
-                  this.rawStatus = -1
-                  this.props.api.get(imageId).then((result) => {
-                    if (result !== null) {
-                      let image
-                      try {
-                        image = JSON.parse(result)
-                      } catch (e) {
-                        document.getElementsByTagName('head')[0].innerHTML = ''
-                        document.body.innerHTML = '<font style="font-size: 1.5rem; font-family: \'Arial\'; left: 50%; top: 50%; position: fixed; transform: translate(-50%, -50%)" color="white">An error occured while loading.</font>'
-                        document.body.style.margin = '0px'
-                        document.body.style.display = 'flex'
-                        document.body.style.justifyContent = 'center'
-                        return
-                      }
-                      this.props.api.ipfs.get(image.url).then((files, error) => {
-                        if (error) {
-                          console.error(error)
-                          document.getElementsByTagName('head')[0].innerHTML = ''
-                          document.body.innerHTML = '<font style="font-size: 1.5rem; font-family: \'Arial\'; left: 50%; top: 50%; position: fixed; transform: translate(-50%, -50%)" color="white">An error occured while loading.</font>'
-                          document.body.style.margin = '0px'
-                          document.body.style.display = 'flex'
-                          document.body.style.justifyContent = 'center'
-                          return
-                        }
-                        this.rawStatus = 0
-                        document.getElementsByTagName('head')[0].innerHTML = ''
-                        document.body.innerHTML = ''
-                        document.body.style.margin = '0px'
-                        document.body.style.display = 'flex'
-                        document.body.style.justifyContent = 'center'
-                        const image: HTMLImageElement = document.createElement('img')
-                        image.src = files[0].content.toString('utf8')
-                        image.style.height = '100vh'
-                        document.body.appendChild(image)
-                      })
-                    } else {
-                      if (this.rawStatus !== 1) {
-                        alert('Image with id "' + imageId + '" doesn\'t exist.')
-                        this.rawStatus = 1
-                      }
-                    }
-                  })
-                  return null
-                }
-                if (this.rawStatus === 404) {
-                  return (<Typography>Unknown endpoint '{match.params.endpoint}', should be 't' or 'm'.</Typography>)
-                } else if (this.rawStatus === 1) {
-                  return (<Typography variant='headline'>Image with id '{match.params.id}' doesn't exist. </Typography>)
-                } else if (this.rawStatus === -2) {
-                  return (<Typography variant='headline'>Invalid image id '{match.params.id}'. </Typography>)
-                } else if (this.rawStatus === -1) {
-                  setTimeout(() => {
-                    const progress = document.getElementById('progress')
-                    if (progress === null) {
-                      const progressTwo = document.getElementById('progressTwo')
-                      if (progressTwo === null) {
-                        document.getElementsByTagName('head')[0].innerHTML = ''
-                        document.body.innerHTML = '<font style="font-size: 1.5rem; font-family: \'Arial\'; left: 50%; top: 50%; position: fixed; transform: translate(-50%, -50%)" color="white">An error occured while loading.</font>'
-                        document.body.style.margin = '0px'
-                        document.body.style.display = 'flex'
-                        document.body.style.justifyContent = 'center'
-                        return
-                      }
-                      return
-                    }
-                    progress.id = 'progressTwo'
-                    document.documentElement.appendChild(progress)
-                    document.body.style.background = '#0e0e0e'
-                    document.getElementById('root').innerHTML = ''
-                  }, 200)
-                  return (<CircularProgress id='progress' style={{ left: '50%', top: '50%', position: 'fixed', transform: 'translate2d(-50%, -50%)' }} />)
-                } else {
-                  return null
+              <Route path='/raw/:id' render={({ match }) => {
+                this.rawRoute = true
+                const imageId = match.params.id
+
+                if (isNaN(imageId)) {
+                  return <Typography>Image id '{imageId}' is invalid.</Typography>
                 }
 
+                if (!this.rawLoading && !this.rawLoaded) {
+                  this.rawLoading = true
+
+                  this.props.api.get(imageId).then((result: any) => {
+                    if (result !== null) {
+                      this.props.api.ipfs.get(result.url).then((files, error) => {
+                        if (error) {
+                          console.error(error)
+                        }
+
+                        this.raw = files[0].content.toString()
+                        this.rawLoading = false
+                        this.rawLoaded = true
+                        this.forceUpdate()
+                      })
+                    } else {
+                      this.rawNotFound = true
+                      this.rawLoading = false
+                      this.rawLoaded = true
+                      this.forceUpdate()
+                    }
+                  })
+                }
+
+                if (this.rawNotFound) {
+                  return <Typography>Image with id '{imageId}' doesn't exist.</Typography>
+                }
+
+                this.rawRoute = false
+
+                if (this.rawLoading) {
+                  return <CircularProgress id='progress' style={{ left: '50%', top: '50%', position: 'fixed', transform: 'translate2d(-50%, -50%)' }}/>
+                } else {
+                  return <img style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    bottom: 0,
+                    right: 0,
+                    margin: 'auto',
+                    overflow: 'auto'
+                  }} src={this.raw}/>
+                }
               }}/>
-              <Route exact path='/upload' component={UploadImagePage}/>
+              <Route exact path='/upload' render={() => {
+                this.category.name = 'INVALID'
+
+                return <UploadImagePage/>
+              }}/>
               <Route path='/category/:id' render={({ match }) => {
                 if (this.category.name !== match.params.id) {
                   this.category.name = match.params.id

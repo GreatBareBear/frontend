@@ -32,8 +32,7 @@ const styles = (theme: Theme) => ({
 })
 
 type TopBarProps = WithStyles & RouteComponentProps<any> & {
-  api: Api,
-  onEndpointChange: (isTestnet: boolean) => void
+  api: Api
 }
 
 const endpointSelectTheme = createMuiTheme({
@@ -74,14 +73,6 @@ class TopBar extends React.Component<TopBarProps> {
     super(props)
   }
 
-  updateEndpoint = (event: any) => {
-    const isTestnet = event.target.value === 'Testnet'
-
-    this.props.api.setApi(isTestnet)
-    this.props.onEndpointChange(isTestnet)
-    this.setState({ currentEndpoint: event.target.value })
-  }
-
   render() {
     const { classes } = this.props
     return (
@@ -92,12 +83,6 @@ class TopBar extends React.Component<TopBarProps> {
             <Typography variant='title' color='inherit' className={classNames(classes.flex)}>
               <a className={classes.title} onClick={() => this.props.history.push('/')}>imgCube</a>
             </Typography>
-            <MuiThemeProvider theme={endpointSelectTheme}>
-              <Select autoWidth={true} value={this.state.currentEndpoint} color='primary' disableUnderline={true} onChange={this.updateEndpoint}>
-                <MenuItem value='Mainnet'>Mainnet</MenuItem>
-                <MenuItem value='Testnet'>Testnet</MenuItem>
-              </Select>
-            </MuiThemeProvider>
             <Button color='inherit' onClick={() => this.props.history.push('/upload')}>
               <FileUpload/>
               Upload new image
@@ -109,6 +94,4 @@ class TopBar extends React.Component<TopBarProps> {
   }
 }
 
-export default withRouter(TopBar) as React.ComponentClass<{
-  onEndpointChange: (isTestnet: boolean) => void
-}>
+export default withRouter(TopBar)

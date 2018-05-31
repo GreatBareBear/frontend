@@ -18,7 +18,7 @@ WebFontLoader.load({
 function initApp() {
   ReactDOM.render(
     <BrowserRouter>
-      <App />
+      <App/>
     </BrowserRouter>,
     document.getElementById('root') as HTMLElement
   )

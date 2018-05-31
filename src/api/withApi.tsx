@@ -2,7 +2,7 @@ import * as React from 'react'
 import Api from './Api'
 
 type InjectedProps = {
-  api: Api
+  api?: Api
 }
 
 const api = new Api()

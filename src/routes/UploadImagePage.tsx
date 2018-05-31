@@ -58,7 +58,9 @@ const styles = (theme: Theme) => ({
     lineHeight: '37px'
   },
   errorText: {
-    color: red[500]
+    color: red[500],
+    marginTop: '45px',
+    fontSize: '17px'
   },
   close: {
     width: theme.spacing.unit * 4,
@@ -75,7 +77,7 @@ export const snackBarMessages = {
 }
 
 type UploadImagePageProps = WithStyles & RouteComponentProps<any> & {
-  api: Api
+  api?: Api
 }
 
 @withStyles(styles)
@@ -116,21 +118,6 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 
   filesToUpload = [] as UploadImage[]
 
-  /*  componentDidMount() {
-      window.addEventListener('beforeunload', this.onRouteChange)
-    }
-
-    componentWillUnmount() {
-      window.removeEventListener('beforeunload', this.onRouteChange)
-    }*/
-
-  onRouteChange = (event) => {
-    if (this.state.files.length > 0) {
-      (event || window.event).returnValue = routeChangeMessage
-      return routeChangeMessage
-    }
-  }
-
   async componentDidUpdate() {
     if (this.state.updated === false) {
       return
@@ -140,27 +127,6 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
         price: new BigNumber(0),
         usdPrice: new BigNumber(0),
         updated: false
-      })
-    }
-    this.calculatePrices('selectedFiles')
-  }
-
-  async calculatePrices(calculateType: string) {
-    const files = calculateType === 'selectedFiles' ? this.state.selectedFiles : this.filesToUpload
-    for (const [index, file] of files.entries()) {
-      const data = await getImageData(file)
-
-      fetch('https://api.coinmarketcap.com/v2/ticker/1908/').then((response: any) => {
-        response.json().then((ticker) => {
-          const nasPrice = new BigNumber(calculateImagePrice(data).toString().substring(17, 0))
-          const usdPrice = new BigNumber(new BigNumber(ticker.data.quotes.USD.price).multipliedBy(nasPrice).toString().substring(6, 0))
-
-          this.setState((prevState) => ({
-            price: prevState.price !== null && index > 0 ? prevState.price.plus(nasPrice) : nasPrice,
-            usdPrice: prevState.usdPrice !== null && index > 0 ? prevState.usdPrice.plus(usdPrice) : usdPrice,
-            updated: false
-          }))
-        })
       })
     }
   }
@@ -181,6 +147,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
     })
 
     this.setState({ files: files.concat(newFiles), updated: true }, () => {
+
       this.addToSelectedFilesList(newFiles, true)
     })
   }
@@ -258,13 +225,23 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
         errorMessages.push('Image name ' + image.name.substring(0, 10000) + '... exceeds the limit of 10000 characters.')
         error = true
       }
+
+      console.log((await getImageData(image)).base64.length * (3 / 4))
+
+      if ((await getImageData(image)).base64.length * (3 / 4) > 2.5 * 10 ** 7) {
+        errorMessages.push('Image ' + image.name + ' is bigger than 25 MB. Please lower the resolution of the image or compress it.')
+        error = true
+      }
     }
 
     if (errorMessages.length === 0) {
       this.filesToUpload = images
-      this.calculatePrices('filesToUpload')
       this.setState({
         showUploadDialog: true
+      })
+    } else {
+      this.setState({
+        errorMessages
       })
     }
   }
@@ -282,82 +259,59 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
       price = price.plus(new BigNumber(new BigNumber(image.width * image.height).div(18300000).toFixed(18)))
     }
 
-    this.props.api.payUpload(price).then(async (response) => {
-      if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
-        this.filesToUpload = []
-        this.setState({
-          showUploadDialog: false,
-          showUploadProgress: false
-        })
+    this.setState({
+      showUploadProgress: true
+    })
 
+    const filesToUpload = this.filesToUpload
+
+    const imageCount = parseInt(await this.props.api.getImageCount(), 10)
+    this.props.api.ipfs.files.add(filesToUpload.map((image, index) => ({
+      path: `uploads/${image.name}-${imageCount + index}`,
+      content: Buffer.from(image.base64, 'utf8')
+    }) as any)).then((filesAdded, error) => {
+      if (!error) {
+        let imageIndex = 0
+        filesToUpload.forEach((file, index) => {
+          file.hash = filesAdded[index].hash
+          file.id = imageCount + imageIndex
+          imageIndex++
+        })
+      } else {
+        console.error(error)
         return
       }
 
-      this.setState({
-        showUploadProgress: true
-      })
-
-      const serialNumber = (response as any).serialNumber
-      const filesToUpload = this.filesToUpload
-
-      const imageCount = parseInt((await this.props.api.getImageCount()).result, 10)
-      this.props.api.ipfs.files.add(filesToUpload.map((image, index) => ({
-        path: `uploads/${image.name}-${imageCount + index}`,
-        content: Buffer.from(image.base64, 'utf8')
-      }) as any)).then((filesAdded, error) => {
-        if (!error) {
-          let imageIndex = 0
-          filesToUpload.forEach((file, index) => {
-            file.hash = filesAdded[index].hash
-            file.id = imageCount + imageIndex
-            imageIndex++
+      this.props.api.upload(filesToUpload).then((response: any) => {
+        if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
+          this.filesToUpload = []
+          this.setState({
+            showUploadDialog: false,
+            showUploadProgress: false
           })
         } else {
-          console.error(error)
-          return
+          const timer = setInterval(async () => {
+            const result = JSON.parse((await this.props.api.getTransactionInfo(response.serialNumber)))
+
+            if (result.data.status === 1) {
+              clearInterval(timer)
+
+              this.setState({
+                showUploadProgress: false,
+                showUploadDialog: true,
+                showUploadFinished: true
+              })
+            }
+          }, 10100)
+
+          const files = this.state.files.filter((file) => !filesToUpload.includes(file))
+          const selectedFiles = this.state.selectedFiles.filter((file) => !filesToUpload.includes(file))
+          this.setState({
+            files,
+            selectedFiles,
+            updated: true
+          })
         }
-
-        const timer = setInterval(async () => {
-          const result = JSON.parse((await this.props.api.getTransactionInfo(serialNumber)))
-
-          if (result.data.status === 1) {
-            clearInterval(timer)
-
-            this.props.api.upload(filesToUpload).then((response: any) => {
-              if (typeof response.response === 'string' && response.response as string === 'Error: Transaction rejected by user') {
-                this.props.api.returnPaidUpload()
-                this.filesToUpload = []
-                this.setState({
-                  showUploadDialog: false,
-                  showUploadProgress: false
-                })
-              } else {
-
-                const timer = setInterval(async () => {
-                  const result = JSON.parse((await this.props.api.getTransactionInfo(serialNumber)))
-
-                  if (result.data.status === 1) {
-                    clearInterval(timer)
-
-                    this.setState({
-                      showUploadProgress: false,
-                      showUploadDialog: true,
-                      showUploadFinished: true
-                    })
-                  }
-                })
-
-                const files = this.state.files.filter((file) => !filesToUpload.includes(file))
-                const selectedFiles = this.state.selectedFiles.filter((file) => !filesToUpload.includes(file))
-                this.setState({
-                  files,
-                  selectedFiles,
-                  updated: true
-                })
-              }
-            })
-          }
-        }, 10100)
       })
     })
   }
@@ -394,22 +348,21 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
       <React.Fragment>
         {this.state.files.length > 0 &&
         <div>
-          <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
-          <Typography variant='subheading' className={classes.yourImages}>
-            Your images{this.state.files.length > 0 ? ` (${this.state.selectedFiles.length} out of ${this.state.files.length} selected)` : ''}:
-            <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.handleUpload()}>
-              {this.state.selectedFiles.length > 1 ? 'Upload all' : 'Upload'}
-            </Button>
-            <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.selectedFiles)}>
-              {this.state.selectedFiles.length > 1 ? 'Delete all' : 'Delete'}
-            </Button>
-            {!this.state.price.eq(new BigNumber(0)) && !this.state.usdPrice.eq(new BigNumber(0)) && <Typography variant='body1' className={classes.totalPriceText}>Total price: {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})</Typography>}
-          </Typography>
-          <Masonry elementType={'div'}>
-            {this.state.files.map((file: UploadImage, index: number) => {
-              return (<UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} uploadFileCallback={() => this.handleUpload([file])} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])}/>)
-            })}
-          </Masonry>
+            <TextField label='Author' placeholder={DEFAULT_AUTHOR} className={classes.textField} value={this.state.author} onChange={(event) => this.updateAuthor(event)} margin='normal'/>
+            <Typography variant='subheading' className={classes.yourImages}>
+                Your images{this.state.files.length > 0 ? ` (${this.state.selectedFiles.length} out of ${this.state.files.length} selected)` : ''}:
+                <Button variant='raised' className={classes.uploadButton} color='primary' onClick={() => this.handleUpload()}>
+                  {this.state.selectedFiles.length > 1 ? 'Upload all' : 'Upload'}
+                </Button>
+                <Button variant='raised' className={classes.deleteButton} color='secondary' onClick={() => this.addToRemoveFilesList(this.state.selectedFiles)}>
+                  {this.state.selectedFiles.length > 1 ? 'Delete all' : 'Delete'}
+                </Button>
+            </Typography>
+            <Masonry elementType={'div'}>
+              {this.state.files.map((file: UploadImage, index: number) => {
+                return (<UploadImageCard fileData={file} index={index} key={index} isSelected={this.state.selectedFiles.includes(file)} uploadFileCallback={() => this.handleUpload([file])} selectFileCallback={(isSelected: boolean) => this.addToSelectedFilesList([file], isSelected)} removeFileCallback={() => this.addToRemoveFilesList([file])}/>)
+              })}
+            </Masonry>
         </div>
         }
       </React.Fragment>
@@ -448,12 +401,12 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
                 <DialogTitle>Upload completed</DialogTitle>
                 <DialogContent>
                   <DialogContentText>
-                    Upload completed successfully. You can see images you uploaded below. <br />
-                    (If the images don't show up immediately in the galleries, you might need to refresh the page.)
+                    Upload completed successfully. You can see images you uploaded below.
                   </DialogContentText>
                   <br/>
                   <Masonry elementType='div'>
                     {this.filesToUpload.map((value: UploadImage, index: number) => {
+                      console.log(value)
                       return (
                         <div key={index} style={{ maxWidth: '260px', minWidth: '220px', boxSizing: 'border-box' }}>
                           <img style={{ width: '100%' }} src={value.base64}/>
@@ -466,8 +419,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
                                   </Tooltip>
                                 </IconButton>
                                 <IconButton style={{ color: 'rgba(255, 255, 255, 0.54)' }} onClick={() => {
-                                  const endpoint = this.props.api.isTestnet ? 't' : 'm'
-                                  copyTextToClipboard(`${window.location.origin}/raw/${endpoint}/${value.id}`)
+                                  copyTextToClipboard(`${window.location.origin}/raw/${value.id}`)
                                   this.setState({ defaultSnackbarShown: true, snackBarMessage: snackBarMessages.linkCopyActionSuccess })
                                 }}>
                                   <Tooltip title='Copy link'>
@@ -509,13 +461,11 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
                   <DialogTitle>Upload {pluralize('image', this.filesToUpload.length)}</DialogTitle>
                   <DialogContent>
                     <DialogContentText>
-                      Are you sure you want to upload {this.filesToUpload.length} {pluralize('image', this.filesToUpload.length)} for {this.state.price.toString()} NAS (~${this.state.usdPrice.toString()})?<br/><br/>
-                      Note: you will be prompted with two transactions and that is intended. The first transaction will send NAS to the contract and the second will upload your image(s). You need to confirm both for the upload to succeed. If you don't actually want to upload the images, just reject the first or the second transaction and all NAS will be returned to your account (excluding the gas fees).
+                      Are you sure you want to upload {this.filesToUpload.length} {pluralize('image', this.filesToUpload.length)}?<br/><br/>
                     </DialogContentText>
                   </DialogContent>
                   <DialogActions>
                     <Button onClick={() => {
-                      this.calculatePrices('selectedFiles')
                       this.setState({ showUploadDialog: false })
                     }} color='secondary' autoFocus>
                       No
@@ -532,17 +482,17 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
           {
             this.state.showErrorDialog &&
             <React.Fragment>
-              <DialogTitle>Nebulas Web Extension Wallet is not installed</DialogTitle>
-              <DialogContent>
-                <Typography>
-                  Upload cannot continue because Nebulas Web Extension Wallet is not installed. To install the wallet extension, follow the instructions <a href='https://github.com/ChengOrangeJu/WebExtensionWallet#webextensionwallet' target='_blank'>here</a>. After you've installed the wallet, try uploading again.
-                </Typography>
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => this.setState({ showErrorDialog: false })} color='primary' autoFocus>
-                  Close
-                </Button>
-              </DialogActions>
+                <DialogTitle>⚠️ Nebulas Web Extension Wallet is not installed ⚠️</DialogTitle>
+                <DialogContent>
+                    <Typography>
+                        Upload cannot continue because Nebulas Web Extension Wallet is not installed. To install the wallet extension, follow the instructions <a href='https://github.com/ChengOrangeJu/WebExtensionWallet#webextensionwallet' target='_blank'>here</a>. After you've installed the wallet, try uploading again.
+                    </Typography>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => this.setState({ showErrorDialog: false })} color='primary' autoFocus>
+                        Close
+                    </Button>
+                </DialogActions>
             </React.Fragment>
           }
         </Dialog>
@@ -572,7 +522,7 @@ class UploadImagePage extends React.Component<UploadImagePageProps, {
 }
 
 export function TransitionUp(props) {
-  return <Slide {...props} direction='up' />
+  return <Slide {...props} direction='up'/>
 }
 
 export default withRouter(UploadImagePage)
